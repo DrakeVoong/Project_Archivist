@@ -35,7 +35,7 @@ class Message_Node:
     children: List['Message_Node'] = field(default_factory=list)
     id: str = field(default_factory=lambda: str(uuid4()))
     time: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    address: str = field(init=False, default="")
+    address: str = field(default="")
 
     def to_json(self):
         data = {}
@@ -320,7 +320,7 @@ class Conversation:
 
         # Helper function to recursively read the json
         def json_to_conversation_helper(curr):
-            message = Message_Node(curr["name"], curr["role"], curr["id"], curr["text"], curr["time"], curr["address"])
+            message = Message_Node(curr["name"], curr["role"], curr["text"], id=curr["id"], time=curr["time"],address=curr["address"])
             if "instruct" in curr:
                 message.instruct = curr["instruct"]
 
@@ -437,5 +437,5 @@ class Conversation:
         with open(json_path, "r") as file:
             json_data = json.load(file)
 
-        self.json_to_conversation(json_data)
+        self.load_json(json_data)
     
