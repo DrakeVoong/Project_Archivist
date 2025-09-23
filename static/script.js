@@ -1,3 +1,13 @@
+
+window.addEventListener("DOMContentLoaded", () => {
+  fetch("/run")
+    .then(response => response.text())
+    .then(data => {
+      console.log("Server response:", data);
+    });
+});
+
+
 async function receiveMessage() {
     const inputText = document.getElementById("chat-input").value;
     if (!inputText) return;
@@ -26,12 +36,22 @@ async function receiveMessage() {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    let doneReading = false;
 
-    // Stream the response
-    while (true) {
+    while (!doneReading) {
         const { value, done } = await reader.read();
         if (done) break;
-        messageDiv.textContent += decoder.decode(value);
+        let chunk = decoder.decode(value, { stream: true });
+
+        if (chunk.includes("__DONE__")) {
+            // Change to markdown html
+            chunk = chunk.replace("__DONE__", "");
+            messageDiv.innerHTML = chunk;
+            doneReading = true;
+        } else {
+            messageDiv.textContent += chunk;
+        }
+
     }
 
     // Scroll to bottom if needed
