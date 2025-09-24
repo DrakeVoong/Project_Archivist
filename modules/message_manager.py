@@ -74,11 +74,13 @@ class Conversation:
         messages (List[Message_Node]): A list of Message_Node objects representing the conversation.
         conv_id (str): A uuid4 string representing the conversation id. Auto-generated.
         time (datetime): The time the conversation was created, in {YYYY-MM-DD HH:MM:SS} format. Auto-generated.
+        title (str): Name of the conversation. Can be LLM generated or user generated/edited.
     """
     def __init__(self):
         self.messages: List['Message_Node'] = None
         self.conv_id = str(uuid4())
         self.time = datetime.now()
+        self.title = ""
 
     def get_message(self, address: str) -> Message_Node:
         """
@@ -317,6 +319,7 @@ class Conversation:
         self.conv_id = json_data["id"]
         self.time = datetime.strptime(json_data["time"], "%Y-%m-%d %H:%M:%S.%f")
         self.messages = []
+        self.title = json_data["title"]
 
         # Helper function to recursively read the json
         def json_to_conversation_helper(curr):
@@ -391,6 +394,7 @@ class Conversation:
         data_json["id"] = self.conv_id
         data_json["time"] = str(self.time)
         data_json["messages"] = []
+        data_json["title"] = self.title
 
         # Helper function to recursively traverse the conversation tree
         def get_json_helper(curr):
@@ -439,3 +443,19 @@ class Conversation:
 
         self.load_json(json_data)
     
+    def find_conversation(self):
+        """
+        Check if the conversation is saved in the memory directory.
+        """
+        memories = os.listdir(settings.MEMORY_DIR)
+
+        # remove .json ending
+        memories = [memory[:-5] for memory in memories]
+
+        if self.conv_id in memories:
+            return True
+        else:
+            return False
+        
+    def is_empty(self):
+        return len(self.messages) == 0

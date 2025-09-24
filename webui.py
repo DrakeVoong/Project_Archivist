@@ -14,7 +14,6 @@ from agent import Agent
 app = Flask(__name__)
 
 current_conv = Conversation()
-
 controller = None
 
 def init_controller():
@@ -61,7 +60,6 @@ def home():
 @app.route("/run")
 def run():
     global controller
-
     if controller is not None and controller.running:
         return "Llama server is already running."
 
@@ -69,7 +67,6 @@ def run():
     t.start()
 
     health_check()
-
     return "Llama server is starting..."
 
 @app.route("/stream", methods=["POST"])
@@ -90,11 +87,13 @@ def stream():
                 break
             yield message_data
             model_message += message_data
-            # markdown_message = markdown.markdown(model_message)
-            # yield model_message
+
         conversation_history.append({"role": "assistant", "content": model_message})
         temp_message = Message_Node("Archivist", "Assistant", model_message, instruct=Archivist_instruct)
         current_conv.add_message(temp_message, "0"*(len(conversation_history)-2))
+
+        if (not current_conv.find_conversation()):
+            current_conv.save()
     
     return Response(generate(), mimetype="application/json")
 
@@ -109,9 +108,13 @@ def get_chat_list():
 
 @app.route("/load_chat/<chat_id>", methods=["GET"])
 def load_chat(chat_id):
-    global current_conv
+    global current_conv, conversation_history
+    if (not current_conv.is_empty()):
+        current_conv.save()
+
     memory = os.path.join(settings.MEMORY_DIR, chat_id + ".json")
     current_conv.load(memory)
+    conversation_history[:1]
 
     with open(memory, "r") as file:
         json_data = json.load(file)
