@@ -162,7 +162,7 @@ class Conversation:
             self.messages = []
             message.address = "0"
             self.messages.append(message)
-            return
+            return message.address
 
         # Address must be a string of integers
         try:
@@ -175,7 +175,7 @@ class Conversation:
         if (len(parent_address) == 0):
             message.address = str(len(self.messages))
             self.messages.append(message)
-            return
+            return message.address
         
         original_parent_address = parent_address
 
@@ -212,6 +212,8 @@ class Conversation:
         message.parent = curr
         message.address = original_parent_address + str(len(curr.children))
         curr.children.append(message)
+
+        return message.address
         
     def delete_message(self, message_address: str):
         """

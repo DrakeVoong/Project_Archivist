@@ -77,20 +77,23 @@ def stream():
 
     conversation_history.append({"role": "user", "content": text})
     temp_message = Message_Node("user", "User", text, "")
-    current_conv.add_message(temp_message, "0"*(len(conversation_history)-2))
+    user_address = current_conv.add_message(temp_message, "0"*(len(conversation_history)-2))
 
     def generate():
+        yield json.dumps({"type":"user_address", "value":user_address}) + "\n"
         model_message = ""
         for message_data, is_last in model.generate_stream(conversation_history, controller, Archivist_settings):
             if is_last:
-                yield markdown.markdown(model_message) + "__DONE__"
+                yield json.dumps({"type":"final", "value":markdown.markdown(model_message)}) + "\n"
                 break
-            yield message_data
+            yield json.dumps({"type":"message", "value": message_data}) + "\n"
             model_message += message_data
 
         conversation_history.append({"role": "assistant", "content": model_message})
         temp_message = Message_Node("Archivist", "Assistant", model_message, instruct=Archivist_instruct)
-        current_conv.add_message(temp_message, "0"*(len(conversation_history)-2))
+        assistant_address = current_conv.add_message(temp_message, "0"*(len(conversation_history)-2))
+
+        yield json.dumps({"type":"assistant_address", "value":assistant_address}) + "\n"
 
         if (not current_conv.find_conversation()):
             current_conv.save()
@@ -109,6 +112,7 @@ def get_chat_list():
 @app.route("/load_chat/<chat_id>", methods=["GET"])
 def load_chat(chat_id):
     global current_conv, conversation_history
+    #Change to built-in conversation func
     if (not current_conv.is_empty()):
         current_conv.save()
 

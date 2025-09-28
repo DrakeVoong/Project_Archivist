@@ -36,23 +36,59 @@ async function receiveMessage() {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-    let doneReading = false;
+    let buffer = "";
 
-    while (!doneReading) {
+    function handleLine(line) {
+        // line is a single JSON string like: {"type":"stream","value":"..."}
+        let obj;
+        try { obj = JSON.parse(line); }
+        catch (e) { console.error("Malformed JSON line:", line); return; }
+
+        switch (obj.type) {
+        case "user_address":
+            userMessageDiv.dataset.address = obj.value;
+            break;
+        case "message":
+            // append partial text while streaming
+            messageDiv.textContent += obj.value;
+            break;
+        case "final":
+            // final chunk may be HTML/markdown already converted server-side
+            messageDiv.innerHTML = obj.value;
+            break;
+        case "assistant_address":
+            messageDiv.dataset.address = obj.value;
+            break;
+        default:
+            console.warn("Unknown chunk type:", obj.type);
+        }
+    }
+
+    while (true) {
         const { value, done } = await reader.read();
-        if (done) break;
-        let chunk = decoder.decode(value, { stream: true });
+        if (value) buffer += decoder.decode(value, { stream: true });
 
-        if (chunk.includes("__DONE__")) {
-            // Change to markdown html
-            chunk = chunk.replace("__DONE__", "");
-            messageDiv.innerHTML = chunk;
-            doneReading = true;
-        } else {
-            messageDiv.textContent += chunk;
+        // extract complete lines terminated by \n
+        let nl;
+        while ((nl = buffer.indexOf("\n")) !== -1) {
+            const line = buffer.slice(0, nl).trim();
+            buffer = buffer.slice(nl + 1);
+            if (line) handleLine(line);
         }
 
-    }
+        if (done) {
+            // flush decoder and any remaining buffer
+            buffer += decoder.decode();
+            buffer = buffer.trim();
+            if (buffer) {
+                // there may be one last line without trailing \n
+                buffer.split("\n").forEach(l => { if (l.trim()) handleLine(l.trim()); });
+            }
+            break;
+        }
+    } 
+
+    loadChatList();
 
     // Scroll to bottom if needed
     parent.scrollTop = parent.scrollHeight;
@@ -69,8 +105,7 @@ input.addEventListener("keyup", (event) => {
   }
 });
 
-// Load chat history
-window.onload = async () => {
+async function loadChatList() {
     const response = await fetch("/get_chat_list");
     const data = await response.json();
 
@@ -87,7 +122,10 @@ window.onload = async () => {
 
         chatList.appendChild(chat);
     }
-    
+}
+
+window.onload = () => {
+    loadChatList();
 };
 
 async function loadChat(chatId) {
@@ -95,31 +133,33 @@ async function loadChat(chatId) {
 
     const chat_message = document.getElementById("chat-messages");
     chat_message.innerHTML = "";
-
+    
     // helper function to recursively read json
     // message tree
     function loadChat_helper(curr, level){
         const messageDiv = document.createElement("div");
         messageDiv.textContent = curr.text;
         messageDiv.classList.add("chat-message");
-
+        messageDiv.dataset.address = curr.address;
+        
         if (curr.role == "User") {
             messageDiv.classList.add("user-message");
         } else if (curr.role == "Assistant") {
             messageDiv.classList.add("assistant-message");
         }
-
+        
         chat_message.appendChild(messageDiv);
-
+        
         if ("children" in curr) {
             for (const child of curr.children) {
                 loadChat_helper(child, level + 1);
             }
         }
-
+        
     }
-
+    
     const data = await response.json();
+    chat_message.dataset.conv_id = data.id;
     const message_list = data.messages
     // Traverse json
     for (const message of message_list) {
