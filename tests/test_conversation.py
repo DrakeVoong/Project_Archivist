@@ -1,15 +1,6 @@
-from uuid import uuid4
-from datetime import datetime
-import sys
-import os
-import uuid
 import pytest
-from datetime import datetime
 
-from modules.vectorDB.vector import VectorDB
 from modules.message_manager import Message_Node, Conversation, MessageAddressError
-
-# C:/Users/banan/Documents/code/python/Sophi/.conda/python -m tests.test-conversation   
 
 
 def test_message_node_creation():

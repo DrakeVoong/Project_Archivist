@@ -1,8 +1,8 @@
 import os
 import time
 import sys
-
 import threading
+
 from llama_server_controller import LlamaServerController
 from model import Model
 from modules.message_manager import Conversation, Message_Node
@@ -58,7 +58,7 @@ def main():
 
         # Saving assistant's response
         conversation_history.append({"role": "assistant", "content": model_message})
-        temp_message = Message_Node("Archivist", "Assistant", model_message, "", instruct=Archivist_instruct)
+        temp_message = Message_Node("Archivist", "Assistant", model_message, instruct=Archivist_instruct)
         conversation.add_message(temp_message, "0"*(len(conversation_history)-2))
         conversation.save()
 
