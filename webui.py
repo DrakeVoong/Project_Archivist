@@ -57,48 +57,74 @@ def init_model():
 def home():
     return render_template("index.html")
 
-@app.route("/run")
-def run():
-    global controller
-    if controller is not None and controller.running:
-        return "Llama server is already running."
+def response_stream(user_address):
+    """
+    A generator function that yields the LLM output along with the markdown version.
+    \n\tFirst yield is the user address
+    \n 2nd - nth yield is text in a token chunk
+    \n next yield is the markdown version
+    \n last yield is the assistant address
 
-    t = threading.Thread(target=init_controller)
-    t.start()
+    """
+    global conversation_history, controller, model, Archivist_settings, current_conv, Archivist_instruct
 
-    health_check()
-    return "Llama server is starting..."
+    yield json.dumps({"type":"user_address", "value":user_address}) + "\n"
+    model_message = ""
+
+    # Stream the LLM response by token
+    for message_data, is_last in model.generate_stream(conversation_history, controller, Archivist_settings):
+        if is_last:
+            yield json.dumps({"type":"final", "value":markdown.markdown(model_message)}) + "\n"
+            break
+        yield json.dumps({"type":"message", "value": message_data}) + "\n"
+        model_message += message_data
+
+    # Keep track of the conversation
+    conversation_history.append({"role": "assistant", "content": model_message})
+    temp_message = Message_Node("Archivist", "Assistant", model_message, instruct=Archivist_instruct)
+    assistant_address = current_conv.add_message(temp_message, user_address)
+
+    yield json.dumps({"type":"assistant_address", "value":assistant_address}) + "\n"
+
+    if (not current_conv.find_conversation()):
+        current_conv.save()
 
 @app.route("/stream", methods=["POST"])
 def stream():
-    global current_conv, controller, model, Archivist_settings, conversation_history, Archivist_instruct
+    global current_conv, conversation_history
     data = request.json
     text = data.get("text", "")
 
     conversation_history.append({"role": "user", "content": text})
     temp_message = Message_Node("user", "User", text, "")
+    # TODO: Change to dynamic address
     user_address = current_conv.add_message(temp_message, "0"*(len(conversation_history)-2))
-
-    def generate():
-        yield json.dumps({"type":"user_address", "value":user_address}) + "\n"
-        model_message = ""
-        for message_data, is_last in model.generate_stream(conversation_history, controller, Archivist_settings):
-            if is_last:
-                yield json.dumps({"type":"final", "value":markdown.markdown(model_message)}) + "\n"
-                break
-            yield json.dumps({"type":"message", "value": message_data}) + "\n"
-            model_message += message_data
-
-        conversation_history.append({"role": "assistant", "content": model_message})
-        temp_message = Message_Node("Archivist", "Assistant", model_message, instruct=Archivist_instruct)
-        assistant_address = current_conv.add_message(temp_message, "0"*(len(conversation_history)-2))
-
-        yield json.dumps({"type":"assistant_address", "value":assistant_address}) + "\n"
-
-        if (not current_conv.find_conversation()):
-            current_conv.save()
     
-    return Response(generate(), mimetype="application/json")
+    return Response(response_stream(user_address), mimetype="application/json")
+
+@app.route("/save_edit_stream", methods=["POST"])
+def save_edit_stream():
+    global current_conv, conversation_history
+
+    data = request.json
+    text_input = data.get("text", "")
+    message_address = data.get("address", "")
+    parent_address = message_address[:len(message_address)-1]
+
+    new_message = Message_Node("user", "User", text_input)
+    new_message_address = current_conv.add_message(new_message, parent_address)
+
+    conv_list = current_conv.get_conv_list_from_address(new_message_address)
+    conversation_history = conversation_history[:1]
+
+    for i in range(len(conv_list)):
+        message = {
+            "role":conv_list[i].role,
+            "content":conv_list[i].text
+        }
+        conversation_history.append(message)
+
+    return Response(response_stream(message_address), mimetype="application/json")
 
 @app.route("/get_chat_list", methods=["GET"])
 def get_chat_list():
@@ -112,7 +138,6 @@ def get_chat_list():
 @app.route("/load_chat/<chat_id>", methods=["GET"])
 def load_chat(chat_id):
     global current_conv, conversation_history
-    #Change to built-in conversation func
     if (not current_conv.is_empty()):
         current_conv.save()
 
@@ -127,13 +152,20 @@ def load_chat(chat_id):
 
 @app.route("/new_chat", methods=["GET"])
 def new_chat():
-    global current_conv
+    global current_conv, conversation_history
     current_conv.save()
     current_conv = Conversation()
+    conversation_history = []
+    conversation_history.append({"role": "system", "content": Archivist_instruct})
 
     return Response(json.dumps({"id": current_conv.conv_id}), mimetype="application/json")
 
 if __name__ == "__main__":
     init_model()
 
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    t = threading.Thread(target=init_controller)
+    t.start()
+
+    health_check()
+
+    app.run(host="0.0.0.0", port=5000)

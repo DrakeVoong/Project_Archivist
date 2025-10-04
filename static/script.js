@@ -1,31 +1,196 @@
+async function saveEditMessage(event) {
+    const textEntryDiv = event.currentTarget;
+    const inputText = textEntryDiv.value;
+    const text_address = textEntryDiv.dataset.address;
 
-window.addEventListener("DOMContentLoaded", () => {
-  fetch("/run")
-    .then(response => response.text())
-    .then(data => {
-      console.log("Server response:", data);
+    // Change the text input back into regular text div
+    const messageBox = textEntryDiv.closest(".chat-message-box");
+    const messageBoxClass = Array.from(messageBox.classList).find(
+        cls => cls.endsWith('-message-box') && cls !== 'chat-message-box');
+
+    const messageRole = messageBoxClass?.split("-")[0];
+
+    // Create the uneditable text message
+    const messageTextDiv = document.createElement("div");
+    messageTextDiv.classList.add("chat-message");
+    messageTextDiv.classList.add(`${messageRole}-message`);
+    messageTextDiv.textContent = inputText;
+    
+    messageBox.replaceChild(messageTextDiv, textEntryDiv);
+
+    // Remove irrelavent messages due to message change 
+    // TODO: Add a way to switch to past unedited message
+    const messagesDiv = document.getElementById("chat-messages")
+    while (messagesDiv.children.length > text_address.length) {
+        messagesDiv.removeChild(messagesDiv.lastChild);
+    }
+
+    // Add assistant div to the chat
+    const assistantMessageDiv = createMessageDiv("assistant", "");
+    const assistantTextDiv = assistantMessageDiv.querySelector(".chat-message");
+    messagesDiv.appendChild(assistantMessageDiv);
+
+    const response = await fetch("/save_edit_stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: inputText, "address": text_address})
     });
-});
 
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    function handleLine(line) {
+        // line is a single JSON string like: {"type":"stream","value":"..."}
+        let obj;
+        try { obj = JSON.parse(line); }
+        catch (e) { console.error("Malformed JSON line:", line); return; }
+
+        switch (obj.type) {
+        case "user_address":
+            break;
+        case "message":
+            // append partial text while streaming
+            assistantTextDiv.textContent += obj.value;
+            break;
+        case "final":
+            // final chunk may be HTML/markdown already converted server-side
+            assistantTextDiv.innerHTML = obj.value;
+            break;
+        case "assistant_address":
+            assistantMessageDiv.dataset.address = obj.value;
+            break;
+        default:
+            console.warn("Unknown chunk type:", obj.type);
+        }
+    }
+
+    while (true) {
+        const { value, done } = await reader.read();
+        if (value) buffer += decoder.decode(value, { stream: true });
+
+        // extract complete lines terminated by \n
+        let nl;
+        while ((nl = buffer.indexOf("\n")) !== -1) {
+            const line = buffer.slice(0, nl).trim();
+            buffer = buffer.slice(nl + 1);
+            if (line) handleLine(line);
+        }
+
+        if (done) {
+            // flush decoder and any remaining buffer
+            buffer += decoder.decode();
+            buffer = buffer.trim();
+            if (buffer) {
+                // there may be one last line without trailing \n
+                buffer.split("\n").forEach(l => { if (l.trim()) handleLine(l.trim()); });
+            }
+            break;
+        }
+    } 
+
+    loadChatList();
+    // Scroll to bottom if needed
+    parent.scrollTop = parent.scrollHeight;
+}
+
+function editMessage(event) {
+    const clicked = event.currentTarget;
+
+    // Change the text div into a text input div for user to edit message
+    const messageBox = clicked.closest(".chat-message-box");
+    const messageAddress = messageBox.dataset.address;
+
+    const messageBoxClass = Array.from(messageBox.classList).find(
+        cls => cls.endsWith('-message-box') && cls !== 'chat-message-box');
+    
+    // Whether it is a "user" or "assistant" message
+    const messageRole = messageBoxClass?.split("-")[0];
+    const messageTextDiv = messageBox.querySelector(`:scope > .${messageRole}-message`);
+    const messageText = messageTextDiv.textContent;
+    messageTextDiv.textContent = "";
+    
+    // Create editable text message
+    const textBoxEntry = document.createElement("input");
+    textBoxEntry.classList.add(`${messageRole}-message`);
+    textBoxEntry.dataset.address = messageAddress;
+    textBoxEntry.type = "text";
+    textBoxEntry.value = messageText;
+
+    textBoxEntry.addEventListener("keyup", (event) => {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        saveEditMessage(event);
+    }
+    });
+
+    messageBox.replaceChild(textBoxEntry, messageTextDiv);
+}
+
+function createMessageDiv(role, text){
+    const messageDiv = document.createElement("div");
+    messageDiv.classList.add("chat-message-box")
+    messageDiv.classList.add(role + "-message-box")
+    
+    // Holds the text and role of the message
+    const textDiv = document.createElement("div");
+    textDiv.classList.add("chat-message");
+    textDiv.classList.add(role + "-message")
+    textDiv.textContent = text;
+    messageDiv.appendChild(textDiv);
+
+    
+    const buttonsDiv = document.createElement("div");
+    buttonsDiv.classList.add("message-box-btn");
+    
+    if (role == "user"){
+        buttonsDiv.classList.add("user-msg-box-btn");
+
+        // Allows the user to edit the message after sending
+        const editDiv = document.createElement("button");
+        editDiv.classList.add("message-btn");
+        editDiv.classList.add("edit-msg-btn");
+        editDiv.innerHTML = '<img class="messsage-svg" src="/static/svg/edit.svg" alt="Edit">';
+        editDiv.addEventListener('click', editMessage);
+        buttonsDiv.appendChild(editDiv);
+        
+        // Allows the user to save text to clipboard
+        const copyDiv = document.createElement("button");
+        copyDiv.classList.add("message-btn");
+        copyDiv.classList.add("copy-msg-btn");
+        copyDiv.innerHTML = '<img class="messsage-svg" src="/static/svg/copy.svg" alt="Edit">';
+        buttonsDiv.appendChild(copyDiv);
+
+    } else if (role == "assistant") {
+        buttonsDiv.classList.add("assistant-msg-box-btn");
+
+        // Allows the user regenerate an LLM response
+        const retryDiv = document.createElement("button");
+        retryDiv.classList.add("message-btn");
+        retryDiv.classList.add("retry-msg-btn");
+        retryDiv.innerHTML = '<img class="messsage-svg" src="/static/svg/refresh.svg" alt="Edit">';
+        buttonsDiv.appendChild(retryDiv);
+    }
+
+    messageDiv.appendChild(buttonsDiv);
+
+    return messageDiv
+}
 
 async function receiveMessage() {
     const inputText = document.getElementById("chat-input").value;
     if (!inputText) return;
 
-    const parent = document.getElementById("chat-messages");
+    inputText.value = "";
 
-    // Add user message to the chat
-    const userMessageDiv = document.createElement("div");
-    userMessageDiv.classList.add("chat-message");
-    userMessageDiv.classList.add("user-message");
-    userMessageDiv.textContent = inputText;
+    const parent = document.getElementById("chat-messages");
+    const userMessageDiv = createMessageDiv("user", inputText);
     parent.appendChild(userMessageDiv);
 
     // Add assistant div to the chat
-    const messageDiv = document.createElement("div");
-    messageDiv.classList.add("chat-message"); 
-    messageDiv.classList.add("assistant-message");
-    parent.appendChild(messageDiv);
+    const assistantMessageDiv = createMessageDiv("assistant", "");
+    const assistantTextDiv = assistantMessageDiv.querySelector(".chat-message");
+    parent.appendChild(assistantMessageDiv);
 
     // Send input to Python backend
     const response = await fetch("/stream", {
@@ -50,14 +215,14 @@ async function receiveMessage() {
             break;
         case "message":
             // append partial text while streaming
-            messageDiv.textContent += obj.value;
+            assistantTextDiv.textContent += obj.value;
             break;
         case "final":
             // final chunk may be HTML/markdown already converted server-side
-            messageDiv.innerHTML = obj.value;
+            assistantTextDiv.innerHTML = obj.value;
             break;
         case "assistant_address":
-            messageDiv.dataset.address = obj.value;
+            assistantMessageDiv.dataset.address = obj.value;
             break;
         default:
             console.warn("Unknown chunk type:", obj.type);
@@ -110,6 +275,7 @@ async function loadChatList() {
     const data = await response.json();
 
     const chatList = document.getElementById("chat-list");
+    chatList.innerHTML = "";
     for (const message of data) {
         const chat = document.createElement("div");
         chat.id = message.id;

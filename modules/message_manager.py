@@ -34,7 +34,7 @@ class Message_Node:
     parent: Optional['Message_Node'] = None
     children: List['Message_Node'] = field(default_factory=list)
     id: str = field(default_factory=lambda: str(uuid4()))
-    time: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    time: str = field(default_factory=lambda: datetime.now().timestamp())
     address: str = field(default="")
 
     def to_json(self):
@@ -73,13 +73,13 @@ class Conversation:
     Attributes:
         messages (List[Message_Node]): A list of Message_Node objects representing the conversation.
         conv_id (str): A uuid4 string representing the conversation id. Auto-generated.
-        time (datetime): The time the conversation was created, in {YYYY-MM-DD HH:MM:SS} format. Auto-generated.
+        time (datetime): The time the conversation was created, in unix format. Auto-generated.
         title (str): Name of the conversation. Can be LLM generated or user generated/edited.
     """
     def __init__(self):
         self.messages: List['Message_Node'] = None
         self.conv_id = str(uuid4())
-        self.time = datetime.now()
+        self.time = datetime.now().timestamp()
         self.title = ""
 
     def get_message(self, address: str) -> Message_Node:
@@ -139,7 +139,6 @@ class Conversation:
 
         return curr
 
-    
     def add_message(self, message: Message_Node, parent_address: str):
         """
         Adds a message to the conversation at the parent address.
@@ -164,19 +163,12 @@ class Conversation:
             self.messages.append(message)
             return message.address
 
-        # Address must be a string of integers
-        try:
-            idx = int(parent_address[0])
-        except (ValueError, TypeError):
-            msg = f"Invalid parent address. Expected integer, got {parent_address[0]}"
-            raise MessageAddressError(parent_address, msg, self.conv_id)
-
         # Add message to beginning of tree
         if (len(parent_address) == 0):
             message.address = str(len(self.messages))
             self.messages.append(message)
             return message.address
-        
+
         original_parent_address = parent_address
 
         # Address must be a string of integers
@@ -262,6 +254,27 @@ class Conversation:
         # Delete message from parent node
         curr.children.pop(int(message_address))
 
+    def get_message_children(self, message_address: str) -> str:
+        """
+        Get the number of message children in a parent message.
+
+        Returns:
+            str: Number of message children
+        """
+        if not self.messages:
+            return ""
+        
+        if len(message_address) == 1:
+            return str(len(self.messages[int(message_address)].children))
+
+        def get_conv_list_helper(curr: Message_Node, level):
+            if level < len(message_address)-1:
+                get_conv_list_helper(curr.children[int(message_address[level+1])], level+1)
+            else:
+                return str(len(curr.children))
+
+        get_conv_list_helper(self.messages[int(message_address[0])], 0)
+
     def get_conv_list(self) -> list[Message_Node]:
         """
         Smushes the conversation into a list of Message_Node objects.
@@ -286,6 +299,31 @@ class Conversation:
         for i in range(len(self.messages)):
             get_conv_list_helper(self.messages[i], 0)
         return data
+    
+    def get_conv_list_from_address(self, address: str) -> list[Message_Node]:
+        """
+        Gets the list of messages that leads to the address starting from 1st message.
+
+        Returns:
+            list[Messsage_Node]: A list of Message_Node objects.
+        """
+        if not self.messages:
+            return []
+        
+        if len(address) == 1:
+            return [self.messages[int(address)]]
+        
+        conv_list = []
+
+        def get_conv_list_helper(curr: Message_Node, level):
+            conv_list.append(curr.to_json())
+
+            if len(address) <= level:
+                get_conv_list_helper(curr.children[int(address[level+1])], level+1)
+
+        get_conv_list_helper(self.messages[int(address[0])], 0)
+
+        return conv_list
 
     def load_json(self, json_data: dict):
         """
@@ -319,7 +357,7 @@ class Conversation:
         """
         # Load the conversation variables
         self.conv_id = json_data["id"]
-        self.time = datetime.strptime(json_data["time"], "%Y-%m-%d %H:%M:%S.%f")
+        self.time = float(json_data["time"])
         self.messages = []
         self.title = json_data["title"]
 
@@ -338,7 +376,6 @@ class Conversation:
         # Traverse the json
         for message in json_data["messages"]:
             self.messages.append(json_to_conversation_helper(message))
-
 
     def print_tree(self):
         """
