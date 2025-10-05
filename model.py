@@ -100,7 +100,7 @@ class Model:
                         
                         # End of stream
                         if data_json["choices"][0]["finish_reason"] == "stop":
-                            yield data_json["usage"]["total_tokens"], True
+                            yield data_json["timings"]["predicted_n"], True
                             break
                         
                         # The token string generated

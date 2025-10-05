@@ -19,12 +19,12 @@ controller = None
 def init_controller():
     global controller
     PORT_NUM = 5001
-    llama_server_path = os.path.join(settings.LLAMA_CPP_DIR, "build", "bin", "Release", "llama-server")
+    llama_server_path = os.path.join(settings.LLAMA_CPP_DIR, "llama-server")
     controller = LlamaServerController(llama_server_path, PORT_NUM)
 
     # Settings
     model_path = os.path.join(settings.LLMS_DIR, "Qwen3-30B-A3B-Instruct-2507-UD-Q4_K_XL.gguf")
-    devices = "cuda0,cuda1"
+    devices = "Vulkan0,Vulkan1"
 
     controller.run(False, model_path, devices)
 
@@ -55,7 +55,7 @@ def init_model():
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("main.html")
 
 def response_stream(user_address):
     """
