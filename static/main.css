@@ -1,0 +1,39 @@
+#workspace-tabs {
+    display: grid;
+}
+
+.workspace-tabs-btns {
+    width: 15%;
+    overflow: hidden;
+    display: flex;
+    margin: 0 auto;
+    padding: 10px 0px;
+    border-radius: 10px;
+    background-color: #f1f1f1;
+    align-self: center;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+}
+
+.workspace-tabs-btns button {
+    background-color: #4B4A4A;
+    border-radius: 5px;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 10px 16px;
+    transition: 0.3s;
+}
+
+.workspace-tabs-btns button:hover {
+    background-color: #939393;
+}
+
+.workspace-tabs-btns button.active {
+    background-color: #C1C1C1;
+}
+
+.workspace-tabcontent {
+    display: none;
+}

@@ -128,6 +128,7 @@ function editMessage(event) {
 }
 
 function createMessageDiv(role, text){
+    role = role.toLowerCase();
     const messageDiv = document.createElement("div");
     messageDiv.classList.add("chat-message-box")
     messageDiv.classList.add(role + "-message-box")
@@ -303,16 +304,7 @@ async function loadChat(chatId) {
     // helper function to recursively read json
     // message tree
     function loadChat_helper(curr, level){
-        const messageDiv = document.createElement("div");
-        messageDiv.textContent = curr.text;
-        messageDiv.classList.add("chat-message");
-        messageDiv.dataset.address = curr.address;
-        
-        if (curr.role == "User") {
-            messageDiv.classList.add("user-message");
-        } else if (curr.role == "Assistant") {
-            messageDiv.classList.add("assistant-message");
-        }
+        const messageDiv = createMessageDiv(curr.role, curr.text);
         
         chat_message.appendChild(messageDiv);
         
