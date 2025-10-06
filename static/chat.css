@@ -1,19 +1,76 @@
 #chat-container {
     display: flex;
-    flex-direction: row;
-    height: 100%;
+    /* justify-content: center;
+    align-items: stretch; */
+    position: relative;
+    height: 90vh;
     width: 100%;
+    gap: 20px;
+}
+
+#chat-list-box {
+    background-color: var(--card-background-color);
+    border-color: var(--card-border-color);
+    border-radius: var(--card-corner-radius);
+    border-style: solid;
+    border-width: var(--card-border-width);
+    width: 15vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    gap: 20px;
+    padding: 15px 0px;
+}
+
+#new-chat-btn {
+    height: 30px;
+    margin: 0px 10px;
+}
+
+#chat-list {
+    height: 80%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#chat-list div {
+    color: var(--msg-color);
+}
+
+.chat-list-section {
+    padding: 10px;
+    margin: 0 10px;
+    height: 25px;
+    background-color: var(--inner-card-section-color);
+    border-radius: var(--inner-card-corner-radius);
+    border-style: solid;
+    border-width: var(--card-border-width);
+    border-color: var(--inner-card-section-border-color);
 }
 
 #chat-box {
-    width: 75%;
-    height: 90vh;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 97%;
+    background-color: var(--card-background-color);
+    border-color: var(--card-border-color);
+    border-style: solid;
+    border-radius: var(--card-corner-radius);
+    border-width: var(--card-border-width);
+    width: 60vw;
     padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 #chat-messages {
+    background-color: hsl(0, 0%, 15%);
+    border-radius: var(--inner-card-corner-radius);
     height: 90%;
-    border: 1px solid #ccc;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -30,16 +87,16 @@
 
 .user-message-box {
     align-self: flex-end;
-    width: 60%;
+    width: 40%;
 }
 
 .assistant-message-box {
     align-self: flex-start;
-    width: 60%;
+    width: 80%;
 }
 
 .chat-message {
-    padding: 5px;
+    padding: 10px;
     margin: 10px;
     background: #f0f0f0;
     border-radius: 4px;
@@ -47,6 +104,20 @@
 
 .user-message {
     text-align: right;
+    background-color: var(--user-msg-background-color);
+    color: var(--msg-color);
+    font-size: 16px;
+}
+
+.assistant-message {
+    text-align: left;
+    background-color: var(--assistant-msg-background-color);
+    color: var(--msg-color);
+}
+
+.assistant-message *{
+    color: var(--msg-color);
+    font-size: 16px;
 }
 
 .message-box-btn {
@@ -74,38 +145,41 @@
     padding: 0px;
 }
 
-.messsage-svg {
+.message-svg {
     width: 20px;
     height: 20px;
+    stroke: var(--btn-svg-stroke-color);
 }
 
-.assistant-message {
-    text-align: left;
-}
-
-
-#chat-list-box {
-    width: 20%;
+#chat-message-input {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    align-items: center;
+    height: 40px;
+    width: 100%;
+    gap: 10px;
 }
 
-
-#new-chat-btn {
-    height: 50px;
-    width: 70%;
-    margin: 0px auto;
+#chat-input {
+    flex: 1;
+    height: 100%;
+    border-radius: var(--inner-card-corner-radius);
+    background-color: var(--inner-card-section-color);
+    border-style: solid;
+    border-width: var(--card-border-width);
+    border-color: var(--inner-card-section-border-color);
+    padding: 0 10px;
+    box-sizing: border-box;
+    color: var(--msg-color);
 }
 
-#chat-list {
-    height: 80%;
-    overflow-y: auto;
-}
-
-#chat-list div {
-    padding: 10px;
-    margin: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+#chat-send-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--inner-card-corner-radius);
+    background-color: var(--inner-card-section-color);
+    border-style: solid;
+    border-width: var(--card-border-width);
+    border-color: var(--inner-card-section-border-color);
+    cursor: pointer;
+    color: var(--msg-color);
 }

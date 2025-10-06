@@ -1,15 +1,40 @@
+:root {
+    --card-background-color: #303030;
+    --card-border-color: #7A7A7A;
+    --card-border-width: 2px;
+    --card-corner-radius: 10px;
+
+    --inner-card-corner-radius: 5px;
+
+    --inner-card-section-color: hsl(0, 0%, 35%);
+    --inner-card-section-border-color: #989898;
+
+    --btn-svg-stroke-color: hsl(0, 0%, 90%);
+    --msg-color: hsl(0, 0%, 90%);
+    --user-msg-background-color: hsl(0, 0%, 20%);
+    --assistant-msg-background-color: hsl(0, 0%, 17.5%);
+}
+
+body {
+    background-color: #1A1A1A;
+}
+
 #workspace-tabs {
-    display: grid;
+    display: flex;
+    flex-direction: column;
 }
 
 .workspace-tabs-btns {
     width: 15%;
     overflow: hidden;
     display: flex;
-    margin: 0 auto;
-    padding: 10px 0px;
-    border-radius: 10px;
-    background-color: #f1f1f1;
+    margin: 10px auto;
+    padding: 5px 0px;
+    border-radius: 5px;
+    border-style: solid;
+    border-width: var(--card-border-width);
+    border-color: var(--card-border-color);
+    background-color: var(--card-background-color);
     align-self: center;
     flex-direction: row;
     justify-content: center;
