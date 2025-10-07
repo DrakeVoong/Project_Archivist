@@ -314,9 +314,9 @@ async function loadChatList() {
     }
 }
 
-window.onload = () => {
+window.addEventListener("load", () => {
     loadChatList();
-};
+});
 
 async function loadChat(chatId) {
     const response = await fetch(`/load_chat/${chatId}`);

@@ -3,42 +3,42 @@ import os
 
 import settings
 
-ROLE_PATH = settings.ROLE_PATH
+AGENT_DIR = settings.AGENT_DIR
 
 class Agent:
     """
-    Stores information on settings and instruct for a role.
+    Stores information on settings and instruct for a agent.
 
     Attributes:
-        name (str): The name of the role.
-        role_settings_path (str): The path to the role settings file.
-        role_instruct_path (str): The path to the role instruct file.
+        name (str): The name of the agent.
+        agent_settings_path (str): The path to the agent settings file.
+        agent_instruct_path (str): The path to the agent instruct file.
     """
     def __init__(self, name):
         self.name = name
-        self.role_settings_path = os.path.join(ROLE_PATH, self.name, self.name + ".json")
-        self.role_instruct_path = os.path.join(ROLE_PATH, self.name, self.name + "_instruct.txt")
+        # self.agent_settings_path = os.path.join(AGENT_PATH, self.name, self.name + ".json")
+        # self.agent_instruct_path = os.path.join(AGENT_PATH, self.name, self.name + "_instruct.txt")
 
-    def get_role_settings(self) -> dict:
-        """
-        Loads the role settings from a json file.
+    # def get_agent_settings(self) -> dict:
+    #     """
+    #     Loads the agent settings from a json file.
 
-        Returns:
-            dict: The role settings.
-        """
-        settings = {}
-        with open(self.role_settings_path, "r") as file:
-            settings = json.load(file)
-        return settings
+    #     Returns:
+    #         dict: The agent settings.
+    #     """
+    #     settings = {}
+    #     with open(self.agent_settings_path, "r") as file:
+    #         settings = json.load(file)
+    #     return settings
     
-    def get_role_instruct(self) -> str:
-        """
-        Loads the role instruct from a text file.
+    # def get_agent_instruct(self) -> str:
+        # """
+        # Loads the agent instruct from a text file.
 
-        Returns:
-            str: The role instruction.
-        """
-        instruct = ""
-        with open(self.role_instruct_path, "r") as file:
-           instruct = file.read()
-        return instruct
+        # Returns:
+        #     str: The agent instruction.
+        # """
+        # instruct = ""
+        # with open(self.agent_instruct_path, "r") as file:
+        #    instruct = file.read()
+        # return instruct

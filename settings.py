@@ -7,7 +7,7 @@ import sys
 MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
 CONV_DIR = os.path.join(MAIN_DIR, "vectors", "conv")
 MEMORY_DIR = os.path.join(MAIN_DIR, "memory")
-ROLE_PATH = os.path.join(MAIN_DIR, "role")
+AGENT_DIR = os.path.join(MAIN_DIR, "agent")
 
 
 # Config

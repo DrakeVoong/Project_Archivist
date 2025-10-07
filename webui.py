@@ -11,7 +11,10 @@ from llama_server_controller import LlamaServerController
 from model import Model
 from agent import Agent
 
+from webui.agent_tab import agent_bp
+
 app = Flask(__name__)
+app.register_blueprint(agent_bp, url_prefix="/agent")
 
 current_conv = Conversation()
 controller = None
@@ -161,11 +164,11 @@ def new_chat():
     return Response(json.dumps({"id": current_conv.conv_id}), mimetype="application/json")
 
 if __name__ == "__main__":
-    init_model()
+    # init_model()
 
-    t = threading.Thread(target=init_controller)
-    t.start()
+    # t = threading.Thread(target=init_controller)
+    # t.start()
 
-    health_check()
+    # health_check()
 
     app.run(host="0.0.0.0", port=5000)

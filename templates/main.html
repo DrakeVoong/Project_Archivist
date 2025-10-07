@@ -5,6 +5,8 @@
     <title>Project Archivist</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drawflow/dist/drawflow.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='agent.css') }}">
 
 </head>
 <body>
@@ -28,17 +30,32 @@
         </div>
         <div id="agent-container" class="workspace-tabcontent">
             <div id="agent-list-box">
-
+                <button id="new-agent-btn">New Agent</button>
+                <div id="agent-list"></div>
             </div>
             <div id="agent-editor">
-
+                <div id="drawflow"></div>
+                <div id="drawflow-save">
+                    <button id="save-workflow-btn">Save workflow</button>
+                </div>
+                <div id="settings-modal">
+                    <h3>Node Settings</h3>
+                    <div id="modal-values"></div>
+                    <button id="save-settings">Save</button>
+                    <button id="close-settings">Close</button>
+                </div>
+            </div>
+            <div id="agent-nodes">
+                <div id="agent-node-list">
+                    <div class="agent-node-section" draggable="true" data-name="exampleNode">Test</div>
+                </div>
             </div>
         </div>
     </div>
 
     <script src="{{ url_for('static', filename='main.js') }}"></script>
     <script src="{{ url_for('static', filename='chat.js') }}"></script>
-
-
+    <script src="https://cdn.jsdelivr.net/npm/drawflow/dist/drawflow.min.js"></script>  
+    <script src="{{ url_for('static', filename='agents.js') }}"></script>
 </body>
 </html>

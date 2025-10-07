@@ -1,0 +1,101 @@
+#agent-container {
+    align-self: center;
+    height: 85vh;
+    gap: 20px;
+}
+
+#agent-list-box {
+    background-color: var(--card-background-color);
+    border-color: var(--card-border-color);
+    border-radius: var(--card-corner-radius);
+    border-style: solid;
+    border-width: var(--card-border-width);
+    width: 15vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    gap: 20px;
+    padding: 15px 0px;
+}
+
+#new-agent-btn {
+    height: 30px;
+    margin: 0px 10px;
+}
+
+#agent-list div {
+    color: var(--msg-color);
+}
+
+.agent-list-section {
+    cursor: pointer;
+    padding: 10px;
+    margin: 0 10px;
+    height: 25px;
+    background-color: var(--inner-card-section-color);
+    border-radius: var(--inner-card-corner-radius);
+    border-style: solid;
+    border-width: var(--card-border-width);
+    border-color: var(--inner-card-section-border-color);
+}
+
+#agent-editor {
+    background-color: var(--card-background-color);
+    border-color: var(--card-border-color);
+    border-style: solid;
+    border-radius: var(--card-corner-radius);
+    border-width: var(--card-border-width);
+    width: 60vw;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#agent-nodes {
+    background-color: var(--card-background-color);
+    border-color: var(--card-border-color);
+    border-radius: var(--card-corner-radius);
+    border-style: solid;
+    border-width: var(--card-border-width);
+    width: 15vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    gap: 20px;
+    padding: 15px 0px;
+}
+
+#agent-node-list div {
+    color: var(--msg-color);
+}
+
+.agent-node-section {
+    cursor: pointer;
+    padding: 10px;
+    margin: 0 10px;
+    height: 25px;
+    background-color: var(--inner-card-section-color);
+    border-radius: var(--inner-card-corner-radius);
+    border-style: solid;
+    border-width: var(--card-border-width);
+    border-color: var(--inner-card-section-border-color);
+}
+
+#drawflow { 
+    width: 100%; 
+    height: 100%; 
+    background: #1e1e1e; 
+}
+
+#settings-modal {
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    z-index: 9999;
+}

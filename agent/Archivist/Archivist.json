@@ -1,4 +1,5 @@
 {
+    "name": "Archivist",
     "max_length": 2048,
     "temperature": 0.9,
     "top_p": 0.9,
