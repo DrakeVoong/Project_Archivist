@@ -20,19 +20,27 @@ def node(inputs=None, settings=None, outputs=None):
         node_settings = {}
         for index, (arg, type) in enumerate(func_data.items()):
             if arg in settings:
-                node_settings[arg] = type
+                if hasattr(type, "__name__"):
+                    node_settings[arg] = type.__name__
+                else:
+                    node_settings[arg] = type
 
         # Get function inputs into {"name": type} format
         node_inputs =  {}
         if inputs is not None:
             for index, (arg, type) in enumerate(func_data.items()):
                 if arg in inputs:
-                    node_inputs[arg] = type
+                    if hasattr(type, "__name__"):
+                        node_inputs[arg] = type.__name__
+                    else:
+                        node_inputs[arg] = type
+
+        module_location = func.__module__[len("nodes."):]
 
         node_metadata = {
             "callable": func,
             "name": func.__qualname__,
-            "module": func.__module__,
+            "module": module_location,
             "inputs": node_inputs or {},
             "settings": node_settings or {},
             "outputs": node_outputs or {}
@@ -40,9 +48,8 @@ def node(inputs=None, settings=None, outputs=None):
 
         func._node_meta = node_metadata
 
-        node_path = f"{func.__module__}.{func.__qualname__}"
+        node_path = f"{module_location}.{func.__qualname__}"
         NODE_REGISTRY[node_path] = node_metadata
-        # print(func._node_meta)
         return func
     return wrap
 

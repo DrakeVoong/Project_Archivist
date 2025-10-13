@@ -1,3 +1,11 @@
+.drawflow .drawflow-node {
+    /* Override display: flex; with the default block display */
+    /* display: block !important;  */
+    
+    /* Override align-items: center; with its default/initial value */
+    align-items: initial !important; /* Or use unset/normal/stretch */
+}
+
 #agent-container {
     align-self: center;
     height: 85vh;
@@ -98,4 +106,40 @@
     border-radius: 8px;
     box-shadow: 0 0 20px rgba(0,0,0,0.3);
     z-index: 9999;
+}
+
+/* .custom-node {
+    width: 80%;
+}
+
+.custom-node * {
+    width: inherit;
+} */
+
+.input {
+    position: relative;
+    width: 15px;
+    height: 15px;
+}
+
+.input-type {
+    position: absolute;
+    left: 100%;
+
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.output {
+    position: relative;
+    width: 15px;
+    height: 15px;
+}
+
+.output-type {
+    position: absolute;
+    right: 100%;
+
+    top: 50%;
+    transform: translateY(-50%);
 }

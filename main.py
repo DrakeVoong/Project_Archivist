@@ -6,7 +6,7 @@ import threading
 from llama_server_controller import LlamaServerController
 from model import Model
 from modules.message_manager import Conversation, Message_Node
-from agent import Agent
+from webui.agent import Agent
 import settings
 
 # Initialize llama-server

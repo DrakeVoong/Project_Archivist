@@ -9,7 +9,7 @@ import settings
 from modules.message_manager import Conversation, Message_Node
 from llama_server_controller import LlamaServerController
 from model import Model
-from agent import Agent
+from webui.agent import Agent # Placeholder
 
 from webui.agent_tab import agent_bp
 

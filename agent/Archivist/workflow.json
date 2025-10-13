@@ -2,17 +2,20 @@
     "drawflow": {
         "Home": {
             "data": {
-                "1": {
-                    "id": 1,
+                "4": {
+                    "id": 4,
                     "name": "custom",
                     "data": {
                         "name": "first"
                     },
                     "class": "custom",
-                    "html": "\n      <div class=\"custom-node\">\n        <input type=\"text\" df-name placeholder=\"Enter text\"/>\n      </div>\n    ",
+                    "html": "\n        <div class=\"custom-node\">\n        <input type=\"text\" df-name placeholder=\"Enter text\"/>\n        </div>\n    ",
                     "typenode": false,
                     "inputs": {
                         "input_1": {
+                            "connections": []
+                        },
+                        "input_2": {
                             "connections": []
                         }
                     },
@@ -20,21 +23,29 @@
                         "output_1": {
                             "connections": [
                                 {
-                                    "node": "2",
+                                    "node": "5",
+                                    "output": "input_2"
+                                }
+                            ]
+                        },
+                        "output_2": {
+                            "connections": [
+                                {
+                                    "node": "5",
                                     "output": "input_1"
                                 },
                                 {
-                                    "node": "3",
+                                    "node": "6",
                                     "output": "input_1"
                                 }
                             ]
                         }
                     },
-                    "pos_x": 100,
-                    "pos_y": 100
+                    "pos_x": 70,
+                    "pos_y": 118
                 },
-                "2": {
-                    "id": 2,
+                "5": {
+                    "id": 5,
                     "name": "custom",
                     "data": {
                         "name": "first first"
@@ -46,7 +57,15 @@
                         "input_1": {
                             "connections": [
                                 {
-                                    "node": "1",
+                                    "node": "4",
+                                    "input": "output_2"
+                                }
+                            ]
+                        },
+                        "input_2": {
+                            "connections": [
+                                {
+                                    "node": "4",
                                     "input": "output_1"
                                 }
                             ]
@@ -55,13 +74,16 @@
                     "outputs": {
                         "output_1": {
                             "connections": []
+                        },
+                        "output_2": {
+                            "connections": []
                         }
                     },
-                    "pos_x": 392,
-                    "pos_y": 67
+                    "pos_x": 451,
+                    "pos_y": 110
                 },
-                "3": {
-                    "id": 3,
+                "6": {
+                    "id": 6,
                     "name": "custom",
                     "data": {
                         "name": "first second"
@@ -73,7 +95,15 @@
                         "input_1": {
                             "connections": [
                                 {
-                                    "node": "1",
+                                    "node": "4",
+                                    "input": "output_2"
+                                }
+                            ]
+                        },
+                        "input_2": {
+                            "connections": [
+                                {
+                                    "node": "7",
                                     "input": "output_1"
                                 }
                             ]
@@ -82,10 +112,46 @@
                     "outputs": {
                         "output_1": {
                             "connections": []
+                        },
+                        "output_2": {
+                            "connections": []
                         }
                     },
-                    "pos_x": 368,
-                    "pos_y": 196
+                    "pos_x": 444,
+                    "pos_y": 265
+                },
+                "7": {
+                    "id": 7,
+                    "name": "custom",
+                    "data": {
+                        "name": "first (2)"
+                    },
+                    "class": "custom",
+                    "html": "\n        <div class=\"custom-node\">\n        <input type=\"text\" df-name placeholder=\"Enter text\"/>\n        </div>\n    ",
+                    "typenode": false,
+                    "inputs": {
+                        "input_1": {
+                            "connections": []
+                        },
+                        "input_2": {
+                            "connections": []
+                        }
+                    },
+                    "outputs": {
+                        "output_1": {
+                            "connections": [
+                                {
+                                    "node": "6",
+                                    "output": "input_2"
+                                }
+                            ]
+                        },
+                        "output_2": {
+                            "connections": []
+                        }
+                    },
+                    "pos_x": 64,
+                    "pos_y": 22
                 }
             }
         }

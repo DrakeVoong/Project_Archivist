@@ -1,8 +1,10 @@
 from flask import Blueprint, request, Response
 import json
 import os
+import copy
 
 import settings
+from nodes.node_handler import NODE_REGISTRY, import_nodes
 
 agent_bp = Blueprint("agent", __name__)
 
@@ -44,6 +46,30 @@ def load_workflow(agentName):
         workflow = json.load(file)
 
     return Response(json.dumps(workflow), mimetype="application/json")
+
+@agent_bp.route("/run_agent_workflow/<agentName>", methods=["GET"])
+def run_workflow(agentName):
+    pass
+
+IMPORT_NODES = False
+
+# Import custom python nodes
+def load_nodes():
+    global IMPORT_NODES
+    if (not IMPORT_NODES):
+        import_nodes()
+        IMPORT_NODES = True
+
+@agent_bp.route("/get_node_list", methods=["GET"])
+def get_node_list():
+    load_nodes()
+
+    # Remove data not needed in frontend side
+    nodes = copy.deepcopy(NODE_REGISTRY)
+    for index, (node_name, node_data) in enumerate(nodes.items()):
+        del node_data["callable"]
+
+    return Response(json.dumps(nodes), mimetype="application/json")
 
 
 if __name__ == "__main__":
