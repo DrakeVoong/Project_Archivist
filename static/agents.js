@@ -18,9 +18,11 @@ async function registerNodeList() {
         // Add user input fields
         const settings = node_data.settings;
         settings_count = Object.keys(settings).length;
+        let count = 1;
         for (const setting_name in settings){
             const setting_type = settings[setting_name];
-            customNode_html += `<input type="text" placeholder="${setting_type}"/>`;
+            customNode_html += `<input type="text" df-setting_${count} placeholder="${setting_type}"/>`;
+            count++;
         }
         customNode_html += '</div>';
         
@@ -90,17 +92,35 @@ async function loadAgentWorkflow(agentName) {
 }
 
 async function saveAgentWorkflow() {
-    const data = editor.export();
+    const workflow = editor.export();
 
     const response = fetch("/agent/save_workflow", {
                         method: "POST",
                         headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify(data)
+                        body: JSON.stringify(workflow)
                     });
 
 }
+
 const saveAgentBtn = document.getElementById("save-workflow-btn");
 saveAgentBtn.addEventListener("click", saveAgentWorkflow);
+
+async function runAgentWorkflow() {
+    const workflow = editor.export();
+
+    const response = await fetch("/agent/run_agent_workflow", {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(workflow)
+                    });
+
+    const data = await response.json();
+
+    console.log(data);
+}
+
+const runAgentBtn = document.getElementById("run-workflow-btn");
+runAgentBtn.addEventListener("click", runAgentWorkflow);
 
 const editorContainer = document.getElementById('drawflow');
 
@@ -129,7 +149,7 @@ editorContainer.addEventListener('drop', (e) => {
         posX,              // x position
         posY,              // y position
         "custom", // class
-        node_list[nodeType], // data
+        structuredClone(node_list[nodeType]), // data
         node_list[nodeType].html //html
     );
 });
@@ -181,16 +201,16 @@ window.addEventListener("load", () => {
         }
         
         // Check if the input and output of the connection are the same type
-        output_port_num = parseInt(output_port_num);
-        input_port_num = parseInt(input_port_num);
+        output_port_num = parseInt(output_port_num)-1;
+        input_port_num = parseInt(input_port_num)-1;
 
         const valid_outputs_array = Object.values(output_data.outputs);
         const valid_inputs_array = Object.values(input_data.inputs);
 
         if (valid_outputs_array[output_port_num] == valid_inputs_array[input_port_num]) {
-            console.log("valid connection");
+            console.log("Valid connection");
         } else {
-            console.log("invalid connection");
+            console.log(`Invalid connection`);
             editor.removeSingleConnection(connection.output_id, connection.input_id, connection.output_class, connection.input_class);
         }
         
@@ -203,15 +223,12 @@ window.addEventListener("load", () => {
     editor.on('nodeCreated', (id) => {
         const new_node = document.querySelector(`#node-${id}`)
         const node_data = editor.getNodeFromId(id).data;
-        
-        console.log(node_data);
-        
+                
         // Add input port type hint
         let input_count = 1;
         const input_div = new_node.querySelector(`.inputs`);
         const node_inputs = node_data.inputs;
         for (const input in node_inputs) {
-            console.log(node_inputs[input]);
             const input_div_num = input_div.querySelector(`.input_${input_count}`);
             input_div_num.innerHTML = `<div class="input-type">${node_inputs[input]}</div>`;
             input_count++;
@@ -222,21 +239,35 @@ window.addEventListener("load", () => {
         const output_div = new_node.querySelector(`.outputs`);
         const node_outputs = node_data.outputs;
         for (const output in node_outputs) {
-            console.log(node_outputs[output]);
             const output_div_num = output_div.querySelector(`.output_${output_count}`);
             output_div_num.innerHTML = `<div class="output-type">${node_outputs[output]}</div>`;
             output_count++;
         }
 
+        
         // Add margin for inner node html, so port text does not overlap with inner node html
         const maxPort = Math.max(input_count, output_count);
         let offset = 20*maxPort;
         if (maxPort > 1) {
             offset += (maxPort/2)* 5;
         }
-
-        const node_html = new_node.querySelector(`.drawflow_content_node`);
+        
+        const node_html = new_node.querySelector(".drawflow_content_node");
         node_html.style.marginTop = `${offset}px`;
+
+
+        // // Change dataset.setting_n in input fields
+        // const inner_node_html = node_html.querySelector(".custom-node");
+        // const inputs = inner_node_html.querySelectorAll("input");
+
+        // let count = 1;
+        // for (const input of inputs) {
+        //     console.log(input)
+        //     delete input.dataset[`setting_${count}`]
+        //     input.dataset[`setting_${id}_${count}`]
+        //     count++;
+        // }
+
 
     })
 });

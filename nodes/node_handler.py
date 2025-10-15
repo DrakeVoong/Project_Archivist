@@ -9,7 +9,7 @@ def node(inputs=None, settings=None, outputs=None):
         func_data = func.__annotations__        
         # Get function outputs into {"name": type} format
         node_outputs = {}
-        if "return" in func_data:
+        if "return" in func_data and outputs is not None:
             for index, output in enumerate(get_args(func_data["return"])):
                 if hasattr(output, "__name__"):
                     node_outputs[outputs[index]] = output.__name__
@@ -18,12 +18,13 @@ def node(inputs=None, settings=None, outputs=None):
 
         # Get function settings into {"name": type} format
         node_settings = {}
-        for index, (arg, type) in enumerate(func_data.items()):
-            if arg in settings:
-                if hasattr(type, "__name__"):
-                    node_settings[arg] = type.__name__
-                else:
-                    node_settings[arg] = type
+        if settings is not None:
+            for index, (arg, type) in enumerate(func_data.items()):
+                if arg in settings:
+                    if hasattr(type, "__name__"):
+                        node_settings[arg] = type.__name__
+                    else:
+                        node_settings[arg] = type
 
         # Get function inputs into {"name": type} format
         node_inputs =  {}
@@ -50,6 +51,7 @@ def node(inputs=None, settings=None, outputs=None):
 
         node_path = f"{module_location}.{func.__qualname__}"
         NODE_REGISTRY[node_path] = node_metadata
+        print(node_metadata)
         return func
     return wrap
 
@@ -59,7 +61,6 @@ def import_nodes():
             if file.endswith(".py") and file != "__init__.py" and file != "node_handler.py":
                 python_file = os.path.join(dirpath, file[:-len(".py")])
                 import_name = python_file.replace(os.sep, ".")
-                print(import_name)
 
                 try:
                     importlib.import_module(import_name)

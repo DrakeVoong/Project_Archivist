@@ -1,10 +1,11 @@
-from flask import Blueprint, request, Response
+from flask import Blueprint, request, Response, jsonify
 import json
 import os
 import copy
 
 import settings
 from nodes.node_handler import NODE_REGISTRY, import_nodes
+from webui.workflow_manager import Workflow
 
 agent_bp = Blueprint("agent", __name__)
 
@@ -47,9 +48,25 @@ def load_workflow(agentName):
 
     return Response(json.dumps(workflow), mimetype="application/json")
 
-@agent_bp.route("/run_agent_workflow/<agentName>", methods=["GET"])
-def run_workflow(agentName):
-    pass
+@agent_bp.route("/run_agent_workflow", methods=["POST"])
+def run_workflow():
+    workflow_data = request.json
+
+    workflow = Workflow()
+    workflow.load_workflow(workflow_data)
+
+    workflow.convert_to_nodes()
+    workflow.get_node_tree()
+    workflow.map_node_to_func(NODE_REGISTRY)
+    workflow.call_funcs(NODE_REGISTRY)
+
+    json_data = [[node.to_json() for node in level] for level in workflow.node_tree]
+
+    # print(NODE_REGISTRY)
+    # print(json_data)
+
+    return Response(json.dumps(json_data), mimetype="application/json")
+
 
 IMPORT_NODES = False
 
