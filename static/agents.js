@@ -58,6 +58,55 @@ window.addEventListener("load", async () => {
     }
 })
 
+// New agent
+document.getElementById("new-agent-btn").addEventListener("click", async () => {
+    
+    const newAgentModal = document.getElementById("new-agent-name-modal");
+    const agentName = newAgentModal.querySelector("#new-agent-name");
+
+    agentName.value = "";
+    newAgentModal.style.display = "block";
+});
+
+document.getElementById("confirm-new-agent").addEventListener("click", async () => {
+    const newAgentModal = document.getElementById("new-agent-name-modal");
+    const agentName = newAgentModal.querySelector("#new-agent-name");
+
+    newAgentModal.style.display = "none";
+
+    const response = await fetch("/agent/new_workflow", {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({"name": agentName.value}) 
+                    });
+
+    const data = await response.json();
+    
+    const drawflowEditor = document.getElementById("drawflow");
+    editor.clear();
+    drawflowEditor.dataset.agent_name = agentName;
+    drawflowEditor.dataset.agent_id = data.id;
+})
+
+document.getElementById("state-workflow-check").addEventListener("change", async () => {
+    const drawflowEditor = document.getElementById("drawflow");
+    const agentName = drawflowEditor.dataset.agent_name;
+    const agentId = drawflowEditor.dataset.agent_id;
+
+    const response = await fetch("/agent/add_workflow_to_events", {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({"name": agentName, "id": agentId}) 
+                    });
+
+    const data = await response.json();
+
+    if (data.status != "200") {
+        this.checked = false;
+    }
+
+})
+
 async function loadAgentList() {
     const response = await fetch("/agent/get_agent_list");
     const data = await response.json();
@@ -105,22 +154,24 @@ async function saveAgentWorkflow() {
 const saveAgentBtn = document.getElementById("save-workflow-btn");
 saveAgentBtn.addEventListener("click", saveAgentWorkflow);
 
-async function runAgentWorkflow() {
-    const workflow = editor.export();
+// Refactoring to be at an ON/OFF state instead of activating
 
-    const response = await fetch("/agent/run_agent_workflow", {
-                        method: "POST",
-                        headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify(workflow)
-                    });
+// async function runAgentWorkflow() {
+//     const workflow = editor.export();
 
-    const data = await response.json();
+//     const response = await fetch("/agent/run_agent_workflow", {
+//                         method: "POST",
+//                         headers: {"Content-Type": "application/json"},
+//                         body: JSON.stringify(workflow)
+//                     });
 
-    console.log(data);
-}
+//     const data = await response.json();
 
-const runAgentBtn = document.getElementById("run-workflow-btn");
-runAgentBtn.addEventListener("click", runAgentWorkflow);
+//     console.log(data);
+// }
+
+// const runAgentBtn = document.getElementById("run-workflow-btn");
+// runAgentBtn.addEventListener("click", runAgentWorkflow);
 
 const editorContainer = document.getElementById('drawflow');
 
@@ -229,8 +280,9 @@ window.addEventListener("load", () => {
         const input_div = new_node.querySelector(`.inputs`);
         const node_inputs = node_data.inputs;
         for (const input in node_inputs) {
+            console.log(input)
             const input_div_num = input_div.querySelector(`.input_${input_count}`);
-            input_div_num.innerHTML = `<div class="input-type">${node_inputs[input]}</div>`;
+            input_div_num.innerHTML = `<div class="input-type">${input}(${node_inputs[input]})</div>`;
             input_count++;
         }
 
@@ -240,7 +292,7 @@ window.addEventListener("load", () => {
         const node_outputs = node_data.outputs;
         for (const output in node_outputs) {
             const output_div_num = output_div.querySelector(`.output_${output_count}`);
-            output_div_num.innerHTML = `<div class="output-type">${node_outputs[output]}</div>`;
+            output_div_num.innerHTML = `<div class="output-type">${output}(${node_outputs[output]})</div>`;
             output_count++;
         }
 

@@ -11,6 +11,8 @@ from llama_server_controller import LlamaServerController
 from model import Model
 from webui.agent import Agent # Placeholder
 
+from nodes.trigger_events.on_message import on_message
+
 from webui.agent_tab import agent_bp
 
 app = Flask(__name__)
@@ -92,18 +94,23 @@ def response_stream(user_address):
     if (not current_conv.find_conversation()):
         current_conv.save()
 
+# @app.route("/stream", methods=["POST"])
+# def stream():
+#     global current_conv, conversation_history
+#     data = request.json
+#     text = data.get("text", "")
+
+#     conversation_history.append({"role": "user", "content": text})
+#     temp_message = Message_Node("user", "User", text, "")
+#     # TODO: Change to dynamic address
+#     user_address = current_conv.add_message(temp_message, "0"*(len(conversation_history)-2))
+    
+#     return Response(response_stream(user_address), mimetype="application/json")
+
 @app.route("/stream", methods=["POST"])
 def stream():
-    global current_conv, conversation_history
-    data = request.json
-    text = data.get("text", "")
+    pass
 
-    conversation_history.append({"role": "user", "content": text})
-    temp_message = Message_Node("user", "User", text, "")
-    # TODO: Change to dynamic address
-    user_address = current_conv.add_message(temp_message, "0"*(len(conversation_history)-2))
-    
-    return Response(response_stream(user_address), mimetype="application/json")
 
 @app.route("/save_edit_stream", methods=["POST"])
 def save_edit_stream():

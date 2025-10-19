@@ -37,17 +37,25 @@
                 <div id="drawflow"></div>
                 <div id="drawflow-btns">
                     <button id="save-workflow-btn">Save workflow</button>
-                    <button id="run-workflow-btn">Run workflow</button>
-                </div>
-                <div id="settings-modal">
-                    <h3>Node Settings</h3>
-                    <div id="modal-values"></div>
-                    <button id="save-settings">Save</button>
-                    <button id="close-settings">Close</button>
+                    <div>Running:</div>
+                    <label id="state-workflow-check" class="switch">
+                        <input type="checkbox">
+                        <span class="slider round"></span>
+                    </label>
+                    <!-- <button id="run-workflow-btn">Run workflow</button> -->
                 </div>
             </div>
             <div id="agent-nodes">
                 <div id="agent-node-list">
+                </div>
+            </div>
+
+            <div id="new-agent-name-modal">
+                <h3>Enter the agent's name</h3>
+                <input type="text" id="new-agent-name">
+                <div id="new-agent-btns">
+                    <button id="confirm-new-agent">Confirm</button>
+                    <button id="cancel-new-agent">Cancel</button>
                 </div>
             </div>
         </div>

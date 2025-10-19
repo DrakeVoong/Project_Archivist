@@ -6,8 +6,12 @@ import copy
 import settings
 from nodes.node_handler import NODE_REGISTRY, import_nodes
 from webui.workflow_manager import Workflow
+from webui.agent import Agent
 
 agent_bp = Blueprint("agent", __name__)
+
+# temporary for now
+agent = Agent("Archivist")
 
 @agent_bp.route("/get_agent_list", methods=["GET"])
 def get_agent_list():
@@ -48,6 +52,14 @@ def load_workflow(agentName):
 
     return Response(json.dumps(workflow), mimetype="application/json")
 
+@agent_bp.route("/new_workflow", methods=["POST"])
+def new_workflow():
+    data = request.json
+
+    agent.new_agent(data["name"])
+
+    return Response(json.dumps({"id": agent.agent_id}), mimetype="application/json")
+
 @agent_bp.route("/run_agent_workflow", methods=["POST"])
 def run_workflow():
     workflow_data = request.json
@@ -67,6 +79,13 @@ def run_workflow():
 
     return Response(json.dumps(json_data), mimetype="application/json")
 
+@agent_bp.route("/add_workflow_to_events", methods=["POST"])
+def add_workflow():
+    data = request.json
+    agentName = data.name
+
+    
+    
 
 IMPORT_NODES = False
 
