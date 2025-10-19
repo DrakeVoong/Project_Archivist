@@ -7,34 +7,38 @@ NODE_REGISTRY = {}
 def node(inputs=None, settings=None, outputs=None):
     def wrap(func):
         func_data = func.__annotations__        
+
         # Get function outputs into {"name": type} format
         node_outputs = {}
         if "return" in func_data and outputs is not None:
-            for index, output in enumerate(get_args(func_data["return"])):
-                if hasattr(output, "__name__"):
-                    node_outputs[outputs[index]] = output.__name__
-                else: # generic type i.e. List[int]
-                    node_outputs[outputs[index]] = str(output).split(".")[1]
+            if str(func_data["return"]).startswith("typing.Generator"):
+                node_outputs[outputs[0]] = "Generator"
+            else:
+                for index, output in enumerate(get_args(func_data["return"])):
+                    if hasattr(output, "__name__"):
+                        node_outputs[outputs[index]] = output.__name__
+                    else: # generic type i.e. List[int]
+                        node_outputs[outputs[index]] = str(output).split(".")[1]
 
         # Get function settings into {"name": type} format
         node_settings = {}
         if settings is not None:
-            for index, (arg, type) in enumerate(func_data.items()):
+            for index, (arg, type_hint) in enumerate(func_data.items()):
                 if arg in settings:
-                    if hasattr(type, "__name__"):
-                        node_settings[arg] = type.__name__
+                    if hasattr(type_hint, "__name__"):
+                        node_settings[arg] = type_hint.__name__
                     else:
-                        node_settings[arg] = type
+                        node_settings[arg] = type_hint
 
-        # Get function inputs into {"name": type} format
+        # Get function inputs into {"name": type_hint} format
         node_inputs =  {}
         if inputs is not None:
-            for index, (arg, type) in enumerate(func_data.items()):
+            for index, (arg, type_hint) in enumerate(func_data.items()):
                 if arg in inputs:
-                    if hasattr(type, "__name__"):
-                        node_inputs[arg] = type.__name__
+                    if hasattr(type_hint, "__name__"):
+                        node_inputs[arg] = type_hint.__name__
                     else:
-                        node_inputs[arg] = type
+                        node_inputs[arg] = type_hint
 
         module_location = func.__module__[len("nodes."):]
 
@@ -51,7 +55,6 @@ def node(inputs=None, settings=None, outputs=None):
 
         node_path = f"{module_location}.{func.__qualname__}"
         NODE_REGISTRY[node_path] = node_metadata
-        print(node_metadata)
         return func
     return wrap
 

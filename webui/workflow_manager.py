@@ -5,6 +5,8 @@ import os
 
 import settings
 
+running_workflow = []
+
 @dataclass
 class Node:
     id: int
@@ -88,7 +90,8 @@ class Workflow:
 
                 # dependants.add(output_value["connections"][0]["node"])
 
-            node = Node(data_key, data_value["name"], needs, settings, dependants)
+
+            node = Node(data_key, data_value["name"], needs, dependants)
             nodes.append(node)
         self.nodes = nodes
 
@@ -138,6 +141,7 @@ class Workflow:
                 function_input = node.needs
                 for index in range(len(function_input)):
                     function_input[index]["input"] = int(function_input[index]["input"].split("_")[1])
+
                 
                 function = Func(node.id, NODE_REGISTRY[node.type]["callable"], node.needs, node.settings, node.dependants)
                 self.func_tree[i].append(function)
@@ -148,13 +152,6 @@ class Workflow:
         variables = {}
         for i in range(len(self.func_tree)):
             for func in self.func_tree[i]:
-                print(f"Running: {func.callable.__name__}")
-                print(f"Inputs: {func.inputs}")
-                print(f"Settings: {func.settings}")
-                print(f"Outputs: {func.outputs}")
-
-                print(f"Variables: {variables}")
-
                 if len(func.inputs + func.settings) == 0:
                     if len(func.outputs) == 0:
                         func.callable()
@@ -169,8 +166,6 @@ class Workflow:
 
                     for index, setting in enumerate(func.settings):
                         args.append(setting[str(index+1)])
-
-                    print(args)
 
                     if len(func.outputs) == 0:
                         func.callable(*args)
