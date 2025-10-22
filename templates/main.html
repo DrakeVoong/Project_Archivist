@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Project Archivist</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drawflow/dist/drawflow.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='agent.css') }}">
+
+</head>
+<body>
+    <div id="workspace-tabs">
+        <div class="workspace-tabs-btns">
+            <button class="workspace-tablinks" onclick="openWorkspace(event, 'chat-container')" id="defaultOpen">Chatbox</button>
+            <button class="workspace-tablinks" onclick="openWorkspace(event, 'agent-container')">Agents</button>
+        </div>
+        <div id="chat-container" class="workspace-tabcontent">
+            <div id="chat-list-box">
+                <button id="new-chat-btn">New Chat</button>
+                <div id="chat-list"></div>
+            </div>
+            <div id="chat-box">
+                <div id="chat-messages"></div>
+                <div id="chat-message-input">
+                    <input type="text" id="chat-input" placeholder="Enter text">
+                    <button id="chat-send-btn">Send</button>
+                </div>
+            </div>
+        </div>
+        <div id="agent-container" class="workspace-tabcontent">
+            <div id="agent-list-box">
+                <button id="new-agent-btn">New Agent</button>
+                <div id="agent-list"></div>
+            </div>
+            <div id="agent-editor">
+                <div id="drawflow"></div>
+                <div id="drawflow-btns">
+                    <button id="save-workflow-btn">Save workflow</button>
+                    <div>Running:</div>
+                    <label id="activate-workflow" class="switch">
+                        <input type="checkbox">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+            <div id="agent-nodes">
+                <div id="agent-node-list">
+                </div>
+            </div>
+
+            <div id="new-agent-name-modal">
+                <h3>Enter the agent's name</h3>
+                <input type="text" id="new-agent-name">
+                <div id="new-agent-btns">
+                    <button id="confirm-new-agent">Confirm</button>
+                    <button id="cancel-new-agent">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <script src="{{ url_for('static', filename='chat.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/drawflow/dist/drawflow.min.js"></script>  
+    <script src="{{ url_for('static', filename='agents.js') }}"></script>
+</body>
+</html>

@@ -497,4 +497,7 @@ class Conversation:
             return False
         
     def is_empty(self):
+        if (self.messages is None):
+            return True
+        
         return len(self.messages) == 0

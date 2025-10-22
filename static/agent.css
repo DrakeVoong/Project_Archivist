@@ -1,0 +1,202 @@
+.drawflow .drawflow-node {
+    align-items: initial !important;
+}
+
+#agent-container {
+    align-self: center;
+    height: 85vh;
+    gap: 20px;
+}
+
+#agent-list-box {
+    background-color: var(--card-background-color);
+    border-color: var(--card-border-color);
+    border-radius: var(--card-corner-radius);
+    border-style: solid;
+    border-width: var(--card-border-width);
+    width: 15vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    gap: 20px;
+    padding: 15px 0px;
+}
+
+#new-agent-btn {
+    height: 30px;
+    margin: 0px 10px;
+}
+
+#agent-list div {
+    color: var(--msg-color);
+}
+
+.agent-list-section {
+    cursor: pointer;
+    padding: 10px;
+    margin: 0 10px;
+    height: 25px;
+    background-color: var(--inner-card-section-color);
+    border-radius: var(--inner-card-corner-radius);
+    border-style: solid;
+    border-width: var(--card-border-width);
+    border-color: var(--inner-card-section-border-color);
+}
+
+#agent-editor {
+    background-color: var(--card-background-color);
+    border-color: var(--card-border-color);
+    border-style: solid;
+    border-radius: var(--card-corner-radius);
+    border-width: var(--card-border-width);
+    width: 60vw;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* CSS from w3schools.com */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+#agent-nodes {
+    background-color: var(--card-background-color);
+    border-color: var(--card-border-color);
+    border-radius: var(--card-corner-radius);
+    border-style: solid;
+    border-width: var(--card-border-width);
+    width: 15vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    gap: 20px;
+    padding: 15px 0px;
+}
+
+#agent-node-list div {
+    color: var(--msg-color);
+}
+
+.agent-node-section {
+    cursor: pointer;
+    padding: 10px;
+    margin: 0 10px;
+    height: 25px;
+    background-color: var(--inner-card-section-color);
+    border-radius: var(--inner-card-corner-radius);
+    border-style: solid;
+    border-width: var(--card-border-width);
+    border-color: var(--inner-card-section-border-color);
+}
+
+#drawflow { 
+    width: 100%; 
+    height: 100%; 
+    background: #1e1e1e; 
+}
+
+#new-agent-name-modal {
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    z-index: 9999;
+}
+
+/* .custom-node {
+    width: 80%;
+}
+
+.custom-node * {
+    width: inherit;
+} */
+
+.input {
+    position: relative;
+    width: 15px;
+    height: 15px;
+}
+
+.input-type {
+    position: absolute;
+    left: 100%;
+
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.output {
+    position: relative;
+    width: 15px;
+    height: 15px;
+}
+
+.output-type {
+    position: absolute;
+    right: 100%;
+
+    top: 50%;
+    transform: translateY(-50%);
+}

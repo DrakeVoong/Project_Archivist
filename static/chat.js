@@ -26,7 +26,7 @@ async function saveEditMessage(event) {
     }
 
     // Add assistant div to the chat
-    const assistantMessageDiv = createMessageDiv("assistant", "");
+    const assistantMessageDiv = await createMessageDiv("assistant", "");
     const assistantTextDiv = assistantMessageDiv.querySelector(".chat-message");
     messagesDiv.appendChild(assistantMessageDiv);
 
@@ -52,6 +52,7 @@ async function saveEditMessage(event) {
         case "message":
             // append partial text while streaming
             assistantTextDiv.textContent += obj.value;
+            parent.scrollTop = parent.scrollHeight;
             break;
         case "final":
             // final chunk may be HTML/markdown already converted server-side
@@ -127,7 +128,23 @@ function editMessage(event) {
     messageBox.replaceChild(textBoxEntry, messageTextDiv);
 }
 
-function createMessageDiv(role, text){
+// Convert an SVG file into an svg element
+async function loadSVGFile(url, className) {
+    const response = await fetch(url);
+
+    const svgText = await response.text();
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgText, "image/svg+xml");
+    const svg = doc.documentElement;
+
+    svg.classList.add(className);
+
+    return svg;
+}
+
+async function createMessageDiv(role, text){
+    role = role.toLowerCase();
     const messageDiv = document.createElement("div");
     messageDiv.classList.add("chat-message-box")
     messageDiv.classList.add(role + "-message-box")
@@ -150,7 +167,9 @@ function createMessageDiv(role, text){
         const editDiv = document.createElement("button");
         editDiv.classList.add("message-btn");
         editDiv.classList.add("edit-msg-btn");
-        editDiv.innerHTML = '<img class="messsage-svg" src="/static/svg/edit.svg" alt="Edit">';
+        // editDiv.innerHTML = '<img class="messsage-svg" src="/static/svg/edit.svg" alt="Edit">';
+        const editSVG = await loadSVGFile("/static/svg/edit.svg", "message-svg");
+        editDiv.appendChild(editSVG);
         editDiv.addEventListener('click', editMessage);
         buttonsDiv.appendChild(editDiv);
         
@@ -158,7 +177,9 @@ function createMessageDiv(role, text){
         const copyDiv = document.createElement("button");
         copyDiv.classList.add("message-btn");
         copyDiv.classList.add("copy-msg-btn");
-        copyDiv.innerHTML = '<img class="messsage-svg" src="/static/svg/copy.svg" alt="Edit">';
+        // copyDiv.innerHTML = '<img class="messsage-svg" src="/static/svg/copy.svg" alt="Edit">';
+        const copySVG = await loadSVGFile("/static/svg/copy.svg", "message-svg");
+        copyDiv.appendChild(copySVG);
         buttonsDiv.appendChild(copyDiv);
 
     } else if (role == "assistant") {
@@ -168,7 +189,9 @@ function createMessageDiv(role, text){
         const retryDiv = document.createElement("button");
         retryDiv.classList.add("message-btn");
         retryDiv.classList.add("retry-msg-btn");
-        retryDiv.innerHTML = '<img class="messsage-svg" src="/static/svg/refresh.svg" alt="Edit">';
+        // retryDiv.innerHTML = '<img class="messsage-svg" src="/static/svg/refresh.svg" alt="Edit">';
+        const retrySVG = await loadSVGFile("/static/svg/refresh.svg", "message-svg");
+        retryDiv.appendChild(retrySVG);
         buttonsDiv.appendChild(retryDiv);
     }
 
@@ -184,11 +207,11 @@ async function receiveMessage() {
     inputText.value = "";
 
     const parent = document.getElementById("chat-messages");
-    const userMessageDiv = createMessageDiv("user", inputText);
+    const userMessageDiv = await createMessageDiv("user", inputText);
     parent.appendChild(userMessageDiv);
 
     // Add assistant div to the chat
-    const assistantMessageDiv = createMessageDiv("assistant", "");
+    const assistantMessageDiv = await createMessageDiv("assistant", "");
     const assistantTextDiv = assistantMessageDiv.querySelector(".chat-message");
     parent.appendChild(assistantMessageDiv);
 
@@ -278,6 +301,7 @@ async function loadChatList() {
     chatList.innerHTML = "";
     for (const message of data) {
         const chat = document.createElement("div");
+        chat.classList.add("chat-list-section");
         chat.id = message.id;
         chat.textContent = message.id; // Placeholder for now
         chat.role = "button";
@@ -290,9 +314,9 @@ async function loadChatList() {
     }
 }
 
-window.onload = () => {
+window.addEventListener("load", () => {
     loadChatList();
-};
+});
 
 async function loadChat(chatId) {
     const response = await fetch(`/load_chat/${chatId}`);
@@ -302,17 +326,8 @@ async function loadChat(chatId) {
     
     // helper function to recursively read json
     // message tree
-    function loadChat_helper(curr, level){
-        const messageDiv = document.createElement("div");
-        messageDiv.textContent = curr.text;
-        messageDiv.classList.add("chat-message");
-        messageDiv.dataset.address = curr.address;
-        
-        if (curr.role == "User") {
-            messageDiv.classList.add("user-message");
-        } else if (curr.role == "Assistant") {
-            messageDiv.classList.add("assistant-message");
-        }
+    async function loadChat_helper(curr, level){
+        const messageDiv = await createMessageDiv(curr.role, curr.text);
         
         chat_message.appendChild(messageDiv);
         

@@ -9,9 +9,15 @@ import settings
 from modules.message_manager import Conversation, Message_Node
 from llama_server_controller import LlamaServerController
 from model import Model
-from agent import Agent
+from webui.agent import Agent # Placeholder
+from webui.workflow_manager import Workflow, running_workflow
+
+from nodes.trigger_events.on_message import on_message
+
+from webui.agent_tab import agent_bp
 
 app = Flask(__name__)
+app.register_blueprint(agent_bp, url_prefix="/agent")
 
 current_conv = Conversation()
 controller = None
@@ -19,12 +25,12 @@ controller = None
 def init_controller():
     global controller
     PORT_NUM = 5001
-    llama_server_path = os.path.join(settings.LLAMA_CPP_DIR, "build", "bin", "Release", "llama-server")
+    llama_server_path = os.path.join(settings.LLAMA_CPP_DIR, "llama-server")
     controller = LlamaServerController(llama_server_path, PORT_NUM)
 
     # Settings
     model_path = os.path.join(settings.LLMS_DIR, "Qwen3-30B-A3B-Instruct-2507-UD-Q4_K_XL.gguf")
-    devices = "cuda0,cuda1"
+    devices = "Vulkan0,Vulkan1"
 
     controller.run(False, model_path, devices)
 
@@ -55,7 +61,7 @@ def init_model():
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("main.html")
 
 def response_stream(user_address):
     """
@@ -88,19 +94,25 @@ def response_stream(user_address):
 
     if (not current_conv.find_conversation()):
         current_conv.save()
+        
+# TODO: Change to running workflow
+# @app.route("/stream", methods=["POST"])
+# def stream():
+#     global current_conv, conversation_history
+#     data = request.json
+#     text = data.get("text", "")
+
+#     conversation_history.append({"role": "user", "content": text})
+#     temp_message = Message_Node("user", "User", text, "")
+#     # TODO: Change to dynamic address
+#     user_address = current_conv.add_message(temp_message, "0"*(len(conversation_history)-2))
+    
+#     return Response(response_stream(user_address), mimetype="application/json")
 
 @app.route("/stream", methods=["POST"])
 def stream():
-    global current_conv, conversation_history
-    data = request.json
-    text = data.get("text", "")
+    pass
 
-    conversation_history.append({"role": "user", "content": text})
-    temp_message = Message_Node("user", "User", text, "")
-    # TODO: Change to dynamic address
-    user_address = current_conv.add_message(temp_message, "0"*(len(conversation_history)-2))
-    
-    return Response(response_stream(user_address), mimetype="application/json")
 
 @app.route("/save_edit_stream", methods=["POST"])
 def save_edit_stream():
@@ -161,11 +173,11 @@ def new_chat():
     return Response(json.dumps({"id": current_conv.conv_id}), mimetype="application/json")
 
 if __name__ == "__main__":
-    init_model()
+    # init_model()
 
-    t = threading.Thread(target=init_controller)
-    t.start()
+    # t = threading.Thread(target=init_controller)
+    # t.start()
 
-    health_check()
+    # health_check()
 
     app.run(host="0.0.0.0", port=5000)
