@@ -20,11 +20,15 @@ class Agent:
     
     def new_agent(self, new_name:str):
         self.name = new_name
+        self.agent_id = str(uuid4())
         new_agent_dir_path = os.path.join(settings.AGENT_DIR, new_name)
         os.mkdir(new_agent_dir_path)
 
         with open(os.path.join(new_agent_dir_path, "workflow.json"), "w") as f:
             pass
+
+        with open(os.path.join(new_agent_dir_path, "setting.json"), "w") as f:
+            json.dump({"id":self.agent_id}, f, indent=4)
 
     def get_workflow_list(self):
         workflows = os.listdir(settings.AGENT_DIR)

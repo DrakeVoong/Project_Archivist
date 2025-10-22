@@ -10,6 +10,7 @@ from modules.message_manager import Conversation, Message_Node
 from llama_server_controller import LlamaServerController
 from model import Model
 from webui.agent import Agent # Placeholder
+from webui.workflow_manager import Workflow, running_workflow
 
 from nodes.trigger_events.on_message import on_message
 
@@ -93,7 +94,8 @@ def response_stream(user_address):
 
     if (not current_conv.find_conversation()):
         current_conv.save()
-
+        
+# TODO: Change to running workflow
 # @app.route("/stream", methods=["POST"])
 # def stream():
 #     global current_conv, conversation_history

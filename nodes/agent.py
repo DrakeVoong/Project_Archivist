@@ -40,7 +40,7 @@ def response_stream(user_address):
         conv.save()
 
 @node(settings=["agent_instruct", "max_length", "temperature", "top_p", "top_k", "min_p", "frequency_penalty", "presence_penalty"],
-        outputs=["agent_instruct", "agent_settings"])
+        outputs=["agent_info"])
 def load_agent_info(agent_instruct: str, max_length: int, temperature: int, 
                 top_p: int, top_k: int, min_p: int, frequency_penalty: int, presence_penalty: int) -> tuple[dict]:
     agent_settings = {
@@ -61,7 +61,7 @@ def load_agent_info(agent_instruct: str, max_length: int, temperature: int,
     return agent_info
 
 @node(inputs=["message", "address", "type", "conversation_history", "conversation", "agent_info"], outputs=["stream_response"])
-def agent(message: str, address: str, type:str, conversation_history: list, conversation: Conversation, agent_info: dict) -> Generator[str, any, None]:
+def agent(message: str, address: str, type:str, conversation_history: list, conversation: Conversation, agent_info: dict) -> tuple[Generator]:
     global conv, conv_history, agent_settings, agent_instruct
     
     conv_history = conversation_history

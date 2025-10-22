@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, List, Callable, Any
+from typing import Optional, List, Callable, Any, Generator
 import json
 import os
 
@@ -31,12 +31,16 @@ class Node:
 class Func:
     id: int
     callable: Callable[..., Any]
+    type: str
     inputs: list
     settings: list
     outputs: list
+    trigger_inputs: dict
+    send_outputs: dict
+
 
     def __str__(self):
-        return (f"id - {self.id}, callable - {self.callable}, inputs - {self.inputs}, settings - {self.settings}, outputs - {self.outputs}")
+        return (f"id - {self.id}, callable - {self.callable}, inputs - {self.inputs}, settings - {self.settings}, outputs - {self.outputs}, trigger inputs - {self.trigger_inputs}")
 
 class Workflow:
     def __init__(self):
@@ -46,7 +50,7 @@ class Workflow:
         self.workflow_JSON = json_data
 
     def load_workflow_file(self, name):
-        with open(os.path.join(settings.AGENT_DIR, name, "test.json"), "r") as file:
+        with open(os.path.join(settings.AGENT_DIR, name, "workflow.json"), "r") as file:
             self.workflow_JSON = json.load(file)
 
     def convert_to_nodes(self):
@@ -61,14 +65,11 @@ class Workflow:
             needs = []
             inputs = data_value["inputs"]
             for input_index, (input_key, input_value) in enumerate(inputs.items()):
-                # Add error check if more than one connections are in an input
+                # TODO: Add error check if more than one connections are in an input
                 if len(input_value["connections"]) == 0:
                     continue
-
                 for connection in input_value["connections"]:
                     needs.append(connection)
-
-                # needs.add(input_value["connections"][0]["node"])
 
             # Find settings
             settings = []
@@ -84,14 +85,10 @@ class Workflow:
             for outputs_index, (output_key, output_value) in enumerate(outputs.items()):
                 if len(output_value["connections"]) == 0:
                     continue
-
                 for connection in output_value["connections"]:
                     dependants.append(connection)
 
-                # dependants.add(output_value["connections"][0]["node"])
-
-
-            node = Node(data_key, data_value["name"], needs, dependants)
+            node = Node(data_key, data_value["name"], needs, settings, dependants)
             nodes.append(node)
         self.nodes = nodes
 
@@ -126,33 +123,44 @@ class Workflow:
             self.func_tree.append([])
             for node in self.node_tree[i]:
                 if node.type not in NODE_REGISTRY:
-                    print("Node type not available")
-                    raise ValueError("node type not available")
+                    raise ValueError(f"Node type: {node.type} not in node registry")
 
-                # Check if all input in node has been filled
+                #Check if all input in node has been filled
                 if len(node.needs) != len(NODE_REGISTRY[node.type]["inputs"]):
-                    print("Not all input has been filled.")
                     raise ValueError("Not all input has been filled.")
                 
-                function_outputs = node.dependants
-                for index in range(len(function_outputs)):
-                    function_outputs[index]["output"] = int(function_outputs[index]["output"].split("_")[1])
 
-                function_input = node.needs
-                for index in range(len(function_input)):
-                    function_input[index]["input"] = int(function_input[index]["input"].split("_")[1])
+                # Dict of which function requires values as arguments from this function's return(s)
+                # Convert into {"node": id, input: port} format
+                for index in range(len(node.dependants)):
+                    node.dependants[index]["output"] = int(node.dependants[index]["output"].split("_")[1])
 
+                # TODO: Should probably be changed to deep copy of the nodes values
                 
-                function = Func(node.id, NODE_REGISTRY[node.type]["callable"], node.needs, node.settings, node.dependants)
+                # Dict of which which function this node needs as arguments
+                # Convert into {"N"}
+                for index in range(len(node.needs)):
+                    node.needs[index]["input"] = int(node.needs[index]["input"].split("_")[1])
+
+                node_data = NODE_REGISTRY[node.type]
+                function_trigger_inputs = node_data["trigger_inputs"]
+                function_send_outputs = node_data["send_outputs"]
+                
+                function = Func(node.id, NODE_REGISTRY[node.type]["callable"], node.type, node.needs, node.settings, node.dependants, function_trigger_inputs, function_send_outputs)
                 self.func_tree[i].append(function)
 
-        print(self.func_tree)
-
-    def call_funcs(self, NODE_REGISTRY: dict):
+    def call_funcs(self, func_tree, trigger_inputs):
+        """
+        
+        trigger_inputs: {"function name":{"arg1_name": arg1, "arg2_name": arg2, ...}}
+        """
         variables = {}
-        for i in range(len(self.func_tree)):
-            for func in self.func_tree[i]:
-                if len(func.inputs + func.settings) == 0:
+        for i in range(len(func_tree)):
+            print(variables)
+            for func in func_tree[i]:
+                func_trigger_inputs = [arg_name for index, (arg_name, arg) in enumerate(func.trigger_inputs.items())]
+
+                if len(func.inputs + func.settings + func_trigger_inputs) == 0:
                     if len(func.outputs) == 0:
                         func.callable()
                     else:
@@ -161,19 +169,47 @@ class Workflow:
 
                     args = []
 
+                    # Check for any trigger events variables
+                    for index, (arg_name, arg_type) in enumerate(func.trigger_inputs.items()):
+                        recieved_arg_type = type(trigger_inputs[func.type][arg_name]).__name__
+                        if recieved_arg_type != arg_type:
+                            raise TypeError(f"Invalid type for function argument. Function: {func.type} with arg: {arg_name}, type: {arg_type}, instead got type: {recieved_arg_type}")
+                        
+                        args.append(trigger_inputs[func.type][arg_name])
+
                     for input in func.inputs:
                         args.append(variables[input["node"]][input["input"]-1])
 
                     for index, setting in enumerate(func.settings):
                         args.append(setting[str(index+1)])
 
-                    if len(func.outputs) == 0:
+                    if len(func.outputs) + len(func.send_outputs) == 0:
                         func.callable(*args)
                     else:
                         result = func.callable(*args)
+
+                # Assuming that generator from send_message is the last node to be processed
+                # probably should fix it but idk how
+                total_index = len(func.outputs) + len(func.send_outputs)
+                if type(result) == tuple:
+                    result = list(result)
+                    for i in range(len(result)):
+                        if type(result[i]) == Generator and ((i+1) >= total_index):
+                            return result[i]
+                else:
+                    if hasattr(type(result), "__name__"):
+                        if type(result).__name__ == "generator" and ((i+1) >= total_index):
+                            return result
                 
+                # Store return values to retrieve them for later nodes
                 variables[func.id] = []
-                variables[func.id].append(result)
+                if type(result) == tuple:
+                    result = list(result)
+                    variables[func.id] = result
+                else:
+                    variables[func.id].append(result)
+
+        return {"status": "success"}
 
     def run_node_tree(self):
         pass

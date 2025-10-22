@@ -82,16 +82,30 @@ document.getElementById("confirm-new-agent").addEventListener("click", async () 
 
     const data = await response.json();
     
-    const drawflowEditor = document.getElementById("drawflow");
     editor.clear();
-    drawflowEditor.dataset.agent_name = agentName;
-    drawflowEditor.dataset.agent_id = data.id;
-})
-
-document.getElementById("state-workflow-check").addEventListener("change", async () => {
     const drawflowEditor = document.getElementById("drawflow");
-    const agentName = drawflowEditor.dataset.agent_name;
-    const agentId = drawflowEditor.dataset.agent_id;
+    drawflowEditor.dataset.name = agentName.value;
+    drawflowEditor.dataset.id = data.id;
+
+    await loadAgentList();
+});
+
+document.getElementById("cancel-new-agent").addEventListener("click", async () => {
+    const newAgentModal = document.getElementById("new-agent-name-modal");
+    const agentName = newAgentModal.querySelector("#new-agent-name");
+
+    agentName.value = "";
+    newAgentModal.style.display = "none";
+});
+
+document.getElementById("activate-workflow").addEventListener("change", async () => {
+    const drawflowEditor = document.getElementById("drawflow");
+    const agentName = drawflowEditor.dataset.name;
+    const agentId = drawflowEditor.dataset.id;
+
+    const workflow = editor.export();
+
+    await saveAgentWorkflow();
 
     const response = await fetch("/agent/add_workflow_to_events", {
                         method: "POST",
@@ -136,17 +150,34 @@ window.addEventListener("load", () => {
 async function loadAgentWorkflow(agentName) {
     const response = await fetch(`/agent/load_agent_workflow/${agentName}`);
     const data = await response.json();
+    editor.clear();
 
-    editor.import(data);
+    const agentId = data["setting"]["id"];
+
+    const drawflow_div = document.getElementById("drawflow");
+    drawflow_div.dataset.id = agentId;
+    drawflow_div.dataset.name = agentName;
+
+    console.log(data["workflow"])
+
+    // error importing workflow  "home"
+    if (data["workflow"] != ""){
+        editor.import(data["workflow"]);    
+    }
+
 }
 
 async function saveAgentWorkflow() {
     const workflow = editor.export();
 
+    const drawflowEditor = document.getElementById("drawflow");
+    const agentName = drawflowEditor.dataset.name;
+    const agentId = drawflowEditor.dataset.id;
+
     const response = fetch("/agent/save_workflow", {
                         method: "POST",
                         headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify(workflow)
+                        body: JSON.stringify({"workflow":workflow, "name": agentName})
                     });
 
 }

@@ -4,21 +4,50 @@ import importlib
 
 NODE_REGISTRY = {}
 
-def node(inputs=None, settings=None, outputs=None):
+def node(inputs=None, settings=None, outputs=None, trigger_inputs=None, send_outputs=None):
     def wrap(func):
-        func_data = func.__annotations__        
+        func_data = func.__annotations__    
+
+        # Get function trigger inputs into {"name": type} format
+        # For example, on_message() would need message, address, and type from the webui to be able
+        # to properly send data to next nodes
+        node_trigger_inputs = {}
+        if trigger_inputs is not None:
+            for index, (arg, type_hint) in enumerate(func_data.items()):
+                if arg in trigger_inputs:
+                    if hasattr(type_hint, "__name__"):
+                        node_trigger_inputs[arg] = type_hint.__name__
+                    else:
+                        node_trigger_inputs[arg] = type_hint
+
 
         # Get function outputs into {"name": type} format
         node_outputs = {}
-        if "return" in func_data and outputs is not None:
-            if str(func_data["return"]).startswith("typing.Generator"):
-                node_outputs[outputs[0]] = "Generator"
-            else:
-                for index, output in enumerate(get_args(func_data["return"])):
-                    if hasattr(output, "__name__"):
-                        node_outputs[outputs[index]] = output.__name__
+        function_send_outputs = {}
+        if "return" in func_data and (outputs is not None or send_outputs is not None):
+            return_values = list(get_args(func_data["return"]))
+
+            global_index = 0
+            # Get all outputs that will become node ports
+            if outputs is not None:
+                for index, output_name in enumerate(outputs):
+                    output_type = return_values[index]
+                    if hasattr(output_type, "__name__"):
+                        node_outputs[output_name] = output_type.__name__
                     else: # generic type i.e. List[int]
-                        node_outputs[outputs[index]] = str(output).split(".")[1]
+                        node_outputs[output_name] = str(output_type).split(".")[1]
+
+                global_index += index
+
+            # Get all outputs that will be returned outside of the loop
+            # For uses such as passing to a flask route function for streaming messages
+            if send_outputs is not None:
+                for index, output_name in enumerate(send_outputs):
+                    output_type = return_values[global_index + index] 
+                    if hasattr(output_type, "__name__"):
+                        function_send_outputs[output_name] = output_type.__name__
+                    else: # generic type i.e. List[int]
+                        function_send_outputs[output_name] = str(output_type).split(".")[1]
 
         # Get function settings into {"name": type} format
         node_settings = {}
@@ -48,7 +77,9 @@ def node(inputs=None, settings=None, outputs=None):
             "module": module_location,
             "inputs": node_inputs or {},
             "settings": node_settings or {},
-            "outputs": node_outputs or {}
+            "outputs": node_outputs or {},
+            "trigger_inputs": node_trigger_inputs or {},
+            "send_outputs": function_send_outputs or {}
         }
 
         func._node_meta = node_metadata
@@ -59,6 +90,10 @@ def node(inputs=None, settings=None, outputs=None):
     return wrap
 
 def import_nodes():
+    """
+    Searches for all python files in nodes dir and imports them, so that no main file editing
+    needs to be done to add new nodes
+    """
     for dirpath, dirnames, files in os.walk("nodes"):
         for file in files:
             if file.endswith(".py") and file != "__init__.py" and file != "node_handler.py":

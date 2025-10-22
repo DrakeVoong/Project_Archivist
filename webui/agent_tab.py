@@ -5,7 +5,7 @@ import copy
 
 import settings
 from nodes.node_handler import NODE_REGISTRY, import_nodes
-from webui.workflow_manager import Workflow
+from webui.workflow_manager import Workflow, running_workflow
 from webui.agent import Agent
 
 agent_bp = Blueprint("agent", __name__)
@@ -26,8 +26,8 @@ def get_agent_list():
 
         with open(json_path, "r") as file:
             content = file.read().strip()
-            if content == "":
-                continue
+            # if content == "":
+            #     continue
 
         avaliable_agents.append(agent)
 
@@ -36,9 +36,11 @@ def get_agent_list():
 @agent_bp.route("/save_workflow", methods=["POST"])
 def save_workflow():
     data = request.json
+    workflow = data["workflow"]
+    name = data["name"]
 
-    with open(os.path.join(settings.AGENT_DIR, "test.json"), "w") as file:
-        json.dump(data, file, indent=4)
+    with open(os.path.join(settings.AGENT_DIR, name, "workflow.json"), "w") as file:
+        json.dump(workflow, file, indent=4)
 
     return Response(json.dumps({"status": 200}))
 
@@ -46,11 +48,21 @@ def save_workflow():
 @agent_bp.route("/load_agent_workflow/<agentName>", methods=["GET"])
 def load_workflow(agentName):
     workflow_path = os.path.join(settings.AGENT_DIR, agentName, "workflow.json")
+    setting_path = os.path.join(settings.AGENT_DIR, agentName, "setting.json")
+
+    data = {"workflow": "", "setting": ""}
+    with open(setting_path, "r") as file:
+        setting = json.load(file)
+    data["setting"] = setting
+
+    if os.path.getsize(workflow_path) == 0:
+        return Response(json.dumps(data), mimetype="application/json")
 
     with open(workflow_path, "r") as file:
         workflow = json.load(file)
+    data["workflow"] = workflow
 
-    return Response(json.dumps(workflow), mimetype="application/json")
+    return Response(json.dumps(data), mimetype="application/json")
 
 @agent_bp.route("/new_workflow", methods=["POST"])
 def new_workflow():
@@ -66,7 +78,6 @@ def run_workflow():
 
     workflow = Workflow()
     workflow.load_workflow(workflow_data)
-
     workflow.convert_to_nodes()
     workflow.get_node_tree()
     workflow.map_node_to_func(NODE_REGISTRY)
@@ -74,17 +85,29 @@ def run_workflow():
 
     json_data = [[node.to_json() for node in level] for level in workflow.node_tree]
 
-    # print(NODE_REGISTRY)
-    # print(json_data)
-
     return Response(json.dumps(json_data), mimetype="application/json")
 
 @agent_bp.route("/add_workflow_to_events", methods=["POST"])
 def add_workflow():
     data = request.json
-    agentName = data.name
-
+    agentName = data["name"]
     
+    workflow = Workflow()
+    workflow.load_workflow_file(agentName)
+    workflow.convert_to_nodes()
+    workflow.map_node_to_func(NODE_REGISTRY)
+
+    # found_on_message = False
+    running_workflow.append(workflow.func_tree)
+    # for level in workflow.func_tree:
+    #     for func in level:
+    #         if func.type == "trigger_events.on_message.on_meesage":
+    #             found_on_message = True
+    #             break
+    #     if found_on_message:
+    #         break
+
+    return Response(json.dumps({"status": 200}))
     
 
 IMPORT_NODES = False
