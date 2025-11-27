@@ -308,22 +308,36 @@ window.addEventListener("load", () => {
                 
         // Add input port type hint
         let input_count = 1;
+        let max_input_len = 0;
         const input_div = new_node.querySelector(`.inputs`);
         const node_inputs = node_data.inputs;
         for (const input in node_inputs) {
-            console.log(input)
             const input_div_num = input_div.querySelector(`.input_${input_count}`);
-            input_div_num.innerHTML = `<div class="input-type">${input}(${node_inputs[input]})</div>`;
+            let type_hint = `${input}(${node_inputs[input]})`;
+            input_div_num.innerHTML = `<div class="input-type">${type_hint}</div>`;
+            console.log(`${input}(${node_inputs[input]})`);
+
+            if (type_hint.length > max_input_len) {
+                max_input_len = type_hint.length;
+            }
+
             input_count++;
         }
 
         // Add output port type hint
-        output_count = 1;
+        let output_count = 1;
+        let max_output_len = 0;
         const output_div = new_node.querySelector(`.outputs`);
         const node_outputs = node_data.outputs;
         for (const output in node_outputs) {
             const output_div_num = output_div.querySelector(`.output_${output_count}`);
-            output_div_num.innerHTML = `<div class="output-type">${output}(${node_outputs[output]})</div>`;
+            let type_hint = `${output}(${node_outputs[output]})`;
+            output_div_num.innerHTML = `<div class="output-type">${type_hint})</div>`;
+
+            if (type_hint.length > max_output_len) {
+                max_output_len = type_hint.length;
+            }
+
             output_count++;
         }
 
@@ -337,6 +351,20 @@ window.addEventListener("load", () => {
         
         const node_html = new_node.querySelector(".drawflow_content_node");
         node_html.style.marginTop = `${offset}px`;
+
+        if ((max_input_len+max_output_len)*7 > 130){
+            new_node.style.width = `${(max_input_len+max_output_len)*7}px`;
+        }
+
+        const inner_node_html = node_html.querySelector(".custom-node");
+
+        // Allow for spacing for node contents (User input fields, node name)
+        if (input_count >= output_count) {
+            inner_node_html.style.marginTop = `${input_count*1.5}px`;
+
+        } else {
+            inner_node_html.style.marginTop = `${output_count*1.5}px`;
+        }
 
 
         // // Change dataset.setting_n in input fields
