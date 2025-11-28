@@ -1,5 +1,5 @@
 from modules.message_manager import Message_Node, Conversation
-import settings
+import archivist.configs.settings as settings
 from nodes.node_handler import node
 
 @node(inputs=["agent_instruct"], outputs=["conversation", "conversation_history"])

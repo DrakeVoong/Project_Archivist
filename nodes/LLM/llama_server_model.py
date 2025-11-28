@@ -5,7 +5,7 @@ import time
 
 from llama_server_controller import LlamaServerController
 from modules.message_manager import Message_Node, Conversation
-import settings
+import archivist.configs.settings as settings
 from nodes.node_handler import node
 
 controller = None

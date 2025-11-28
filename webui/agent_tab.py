@@ -3,7 +3,7 @@ import json
 import os
 import copy
 
-import settings
+import archivist.configs.settings as settings
 from nodes.node_handler import NODE_REGISTRY, import_nodes
 from webui.workflow_manager import Workflow, running_workflow
 from webui.agent import Agent

@@ -2,7 +2,7 @@ import json
 import os
 from uuid import uuid4
 
-import settings
+import archivist.configs.settings as settings
 from nodes.node_handler import node
 
 class Agent:

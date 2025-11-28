@@ -3,7 +3,7 @@ from typing import Optional, List, Callable, Any, Generator
 import json
 import os
 
-import settings
+import archivist.configs.settings as settings
 
 running_workflow = []
 

@@ -4,11 +4,10 @@ import sys
 
 
 # Paths
-MAIN_DIR = os.path.dirname(os.path.abspath(__file__))
+MAIN_DIR = os.getcwd()
 CONV_DIR = os.path.join(MAIN_DIR, "vectors", "conv")
 MEMORY_DIR = os.path.join(MAIN_DIR, "memory")
 AGENT_DIR = os.path.join(MAIN_DIR, "agent")
-
 
 # Config
 with open(os.path.join(MAIN_DIR, "config.json"), "r") as file:

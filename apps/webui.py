@@ -5,7 +5,8 @@ import os
 import threading
 import markdown
 
-import settings
+# import settings
+import archivist.configs.settings as settings
 from nodes.node_handler import NODE_REGISTRY, import_nodes
 from webui.workflow_manager import Workflow, running_workflow
 from modules.message_manager import Conversation, Message_Node
@@ -15,7 +16,11 @@ from model import Model
 
 from webui.agent_tab import agent_bp
 
-app = Flask(__name__)
+app = Flask(__name__,
+            template_folder="../archivist/templates",
+            static_folder="../archivist/static"
+            )
+
 app.register_blueprint(agent_bp, url_prefix="/agent")
 
 current_conv = Conversation()

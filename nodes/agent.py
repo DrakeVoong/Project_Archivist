@@ -3,7 +3,7 @@ import json
 import markdown
 from typing import Generator
 
-import settings
+import archivist.configs.settings as settings
 from modules.message_manager import Message_Node, Conversation
 from nodes.node_handler import node
 from model import Model

@@ -4,7 +4,7 @@ import subprocess
 import signal
 import psutil
 
-import settings
+import archivist.configs.settings as settings
 
 class LlamaServerController:
     """
