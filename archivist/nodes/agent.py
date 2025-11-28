@@ -5,7 +5,7 @@ from typing import Generator
 
 import archivist.configs.settings as settings
 from modules.message_manager import Message_Node, Conversation
-from nodes.node_handler import node
+from archivist.nodes.node_handler import node
 from model import Model
 from llama_server_controller import LlamaServerController
 
@@ -75,7 +75,7 @@ def agent(message: str, address: str, type:str, llama_controller:LlamaServerCont
     agent_settings = agent_info["agent_settings"]
     agent_instruct = agent_info["agent_instruct"]
 
-    # Webui live resposne
+    # Webui live response
     if type == "stream":
         conv_history.append({"role": "user", "content": message})
         msg_node = Message_Node("user", "User", message, "")

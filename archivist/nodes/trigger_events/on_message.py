@@ -1,4 +1,4 @@
-from nodes.node_handler import node
+from archivist.nodes.node_handler import node
 
 @node(inputs=[], settings=[], outputs=["message", "address", "type"], trigger_inputs=["message", "address", "msg_type"])
 def on_message(message: str, address: str, msg_type: str) -> tuple[str, str, str]:

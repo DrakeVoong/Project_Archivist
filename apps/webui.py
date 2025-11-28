@@ -7,14 +7,14 @@ import markdown
 
 # import settings
 import archivist.configs.settings as settings
-from nodes.node_handler import NODE_REGISTRY, import_nodes
-from webui.workflow_manager import Workflow, running_workflow
+from archivist.nodes.node_handler import NODE_REGISTRY, import_nodes
+from archivist.webui.workflow_manager import Workflow, running_workflow
 from modules.message_manager import Conversation, Message_Node
-from webui.agent import Agent # Placeholder
+from archivist.webui.agent import Agent # Placeholder
 from llama_server_controller import LlamaServerController
 from model import Model
 
-from webui.agent_tab import agent_bp
+from archivist.webui.agent_tab import agent_bp
 
 app = Flask(__name__,
             template_folder="../archivist/templates",
@@ -66,99 +66,27 @@ def init_model():
 @app.route("/")
 def home():
     return render_template("main.html")
-
-# def response_stream(user_address):
-#     """
-#     A generator function that yields the LLM output along with the markdown version.
-#     \n\tFirst yield is the user address
-#     \n 2nd - nth yield is text in a token chunk
-#     \n next yield is the markdown version
-#     \n last yield is the assistant address
-
-#     """
-#     global conversation_history, controller, model, Archivist_settings, current_conv, Archivist_instruct
-
-#     yield json.dumps({"type":"user_address", "value":user_address}) + "\n"
-#     model_message = ""
-
-#     # Stream the LLM response by token
-#     for message_data, is_last in model.generate_stream(conversation_history, controller, Archivist_settings):
-#         if is_last:
-#             yield json.dumps({"type":"final", "value":markdown.markdown(model_message)}) + "\n"
-#             break
-#         yield json.dumps({"type":"message", "value": message_data}) + "\n"
-#         model_message += message_data
-
-#     # Keep track of the conversation
-#     conversation_history.append({"role": "assistant", "content": model_message})
-#     temp_message = Message_Node("Archivist", "Assistant", model_message, instruct=Archivist_instruct)
-#     assistant_address = current_conv.add_message(temp_message, user_address)
-
-#     yield json.dumps({"type":"assistant_address", "value":assistant_address}) + "\n"
-
-#     if (not current_conv.find_conversation()):
-#         current_conv.save()
         
-# TODO: Change to running workflow
 # response stream from agent node is prob not in the right format right for json and previous assumptions
 @app.route("/stream", methods=["POST"])
 def stream():
     data = request.json
 
+    # run workflow set by user
     workflow = Workflow()
-    workflow.load_workflow_file("Archivist")
+    workflow.load_workflow_file("Archivist") # placeholder
     workflow.convert_to_nodes()
     workflow.get_node_tree()
     workflow.map_node_to_func(NODE_REGISTRY)
 
-    on_message_data = {"message": data["text"], "address": "", "msg_type": "stream"}
+    # template for on_message
+    # address is left as empty string intentionally
+    # response stream from agent.py will fill it in
+    on_message_data = {"message": data["text"], "address": "", "msg_type": "stream"} 
 
     trigger_inputs = {"trigger_events.on_message.on_message": on_message_data}
     response_stream = workflow.call_funcs(workflow.func_tree, trigger_inputs)
     return Response(response_stream, mimetype="application/json")
-
-
-# @app.route("/stream", methods=["POST"])
-# def stream():
-#     global current_conv, conversation_history
-#     data = request.json
-#     text = data.get("text", "")
-
-#     conversation_history.append({"role": "user", "content": text})
-#     temp_message = Message_Node("user", "User", text, "")
-#     # TODO: Change to dynamic address
-#     user_address = current_conv.add_message(temp_message, "0"*(len(conversation_history)-2))
-    
-#     return Response(response_stream(user_address), mimetype="application/json")
-
-# @app.route("/stream", methods=["POST"])
-# def stream():
-#     pass
-
-
-# @app.route("/save_edit_stream", methods=["POST"])
-# def save_edit_stream():
-#     global current_conv, conversation_history
-
-#     data = request.json
-#     text_input = data.get("text", "")
-#     message_address = data.get("address", "")
-#     parent_address = message_address[:len(message_address)-1]
-
-#     new_message = Message_Node("user", "User", text_input)
-#     new_message_address = current_conv.add_message(new_message, parent_address)
-
-#     conv_list = current_conv.get_conv_list_from_address(new_message_address)
-#     conversation_history = conversation_history[:1]
-
-#     for i in range(len(conv_list)):
-#         message = {
-#             "role":conv_list[i].role,
-#             "content":conv_list[i].text
-#         }
-#         conversation_history.append(message)
-
-#     return Response(response_stream(message_address), mimetype="application/json")
 
 @app.route("/get_chat_list", methods=["GET"])
 def get_chat_list():

@@ -1,6 +1,6 @@
 from modules.message_manager import Message_Node, Conversation
 import archivist.configs.settings as settings
-from nodes.node_handler import node
+from archivist.nodes.node_handler import node
 
 @node(inputs=["agent_instruct"], outputs=["conversation", "conversation_history"])
 def memory(agent_instruct: str) -> tuple[Conversation, list]:

@@ -1,7 +1,7 @@
 from typing import Generator
 import json
 
-from nodes.node_handler import node
+from archivist.nodes.node_handler import node
 
 @node(settings=["string"], outputs=["string"])
 def string_textbox(string: str) -> tuple[str]:

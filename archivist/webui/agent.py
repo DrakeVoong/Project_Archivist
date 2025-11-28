@@ -3,7 +3,7 @@ import os
 from uuid import uuid4
 
 import archivist.configs.settings as settings
-from nodes.node_handler import node
+from archivist.nodes.node_handler import node
 
 class Agent:
     """

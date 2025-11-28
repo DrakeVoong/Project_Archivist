@@ -1,6 +1,7 @@
 from typing import get_args
 import os
 import importlib
+from pathlib import Path
 
 NODE_REGISTRY = {}
 
@@ -69,7 +70,8 @@ def node(inputs=None, settings=None, outputs=None, trigger_inputs=None, send_out
                     else:
                         node_inputs[arg] = type_hint
 
-        module_location = func.__module__[len("nodes."):]
+        # Truncate module name from archvisit.nodes.example.node1 to example.node1
+        module_location = func.__module__[len("archivist.nodes."):]
 
         node_metadata = {
             "callable": func,
@@ -94,16 +96,23 @@ def import_nodes():
     Searches for all python files in nodes dir and imports them, so that no main file editing
     needs to be done to add new nodes
     """
-    for dirpath, dirnames, files in os.walk("nodes"):
+
+    for dirpath, dirnames, files in os.walk(os.path.join("archivist", "nodes")):
         for file in files:
+
+            # All python files that contain nodes
             if file.endswith(".py") and file != "__init__.py" and file != "node_handler.py":
-                python_file = os.path.join(dirpath, file[:-len(".py")])
-                import_name = python_file.replace(os.sep, ".")
+                
+                # convert relative path of python file into import format
+                python_file = os.path.join(dirpath, file[:-len(".py")]) # archivist\nodes\example
+                import_name = python_file.replace(os.sep, ".") # archivist.nodes.example
 
                 try:
                     importlib.import_module(import_name)
                 except Exception as e:
                     print(f"Error importing: {import_name} Error: {e}")
 
+
 if __name__ == "__main__":
-    import_nodes()
+    # import_nodes()
+    importlib.import_module("archivist.nodes.string")

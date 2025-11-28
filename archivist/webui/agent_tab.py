@@ -4,9 +4,9 @@ import os
 import copy
 
 import archivist.configs.settings as settings
-from nodes.node_handler import NODE_REGISTRY, import_nodes
-from webui.workflow_manager import Workflow, running_workflow
-from webui.agent import Agent
+from archivist.nodes.node_handler import NODE_REGISTRY, import_nodes
+from archivist.webui.workflow_manager import Workflow, running_workflow
+from archivist.webui.agent import Agent
 
 agent_bp = Blueprint("agent", __name__)
 
@@ -97,15 +97,7 @@ def add_workflow():
     workflow.convert_to_nodes()
     workflow.map_node_to_func(NODE_REGISTRY)
 
-    # found_on_message = False
     running_workflow.append(workflow.func_tree)
-    # for level in workflow.func_tree:
-    #     for func in level:
-    #         if func.type == "trigger_events.on_message.on_meesage":
-    #             found_on_message = True
-    #             break
-    #     if found_on_message:
-    #         break
 
     return Response(json.dumps({"status": 200}))
     
