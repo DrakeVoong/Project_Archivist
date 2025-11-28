@@ -4,7 +4,7 @@ import markdown
 from typing import Generator
 
 import archivist.configs.settings as settings
-from modules.message_manager import Message_Node, Conversation
+from archivist.message_manager import Message_Node, Conversation
 from archivist.nodes.node_handler import node
 from model import Model
 from llama_server_controller import LlamaServerController

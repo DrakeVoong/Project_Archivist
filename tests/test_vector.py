@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import os
 
-from modules.message_manager import Message_Node, Conversation
+from archivist.message_manager import Message_Node, Conversation
 from modules.vectorDB.vector import VectorDB
 
 

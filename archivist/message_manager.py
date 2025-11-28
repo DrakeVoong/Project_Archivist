@@ -5,7 +5,7 @@ from uuid import uuid4
 import json
 import os
 
-import archivist.configs.settings as settings 
+import archivist.configs.settings as settings
 
 MEMORY_DIR = settings.MEMORY_DIR
 

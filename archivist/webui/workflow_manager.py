@@ -156,7 +156,6 @@ class Workflow:
         """
         variables = {}
         for i in range(len(func_tree)):
-            print(variables)
             for func in func_tree[i]:
                 func_trigger_inputs = [arg_name for index, (arg_name, arg) in enumerate(func.trigger_inputs.items())]
 

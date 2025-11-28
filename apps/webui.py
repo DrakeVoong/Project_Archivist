@@ -9,7 +9,7 @@ import markdown
 import archivist.configs.settings as settings
 from archivist.nodes.node_handler import NODE_REGISTRY, import_nodes
 from archivist.webui.workflow_manager import Workflow, running_workflow
-from modules.message_manager import Conversation, Message_Node
+from archivist.message_manager import Conversation, Message_Node
 from archivist.webui.agent import Agent # Placeholder
 from llama_server_controller import LlamaServerController
 from model import Model

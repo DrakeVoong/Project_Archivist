@@ -1,6 +1,6 @@
 import pytest
 
-from modules.message_manager import Message_Node, Conversation, MessageAddressError
+from archivist.message_manager import Message_Node, Conversation, MessageAddressError
 
 
 def test_message_node_creation():

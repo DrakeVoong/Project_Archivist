@@ -1,4 +1,4 @@
-from modules.message_manager import Message_Node, Conversation
+from archivist.message_manager import Message_Node, Conversation
 import archivist.configs.settings as settings
 from archivist.nodes.node_handler import node
 
