@@ -202,8 +202,9 @@ class Workflow:
                             return result
                 
                 # Store return values to retrieve them for later nodes
+                # unpack return values from functions
                 variables[func.id] = []
-                if type(result) == tuple:
+                if type(result) == tuple or type(result) == list:
                     result = list(result)
                     variables[func.id] = result
                 else:

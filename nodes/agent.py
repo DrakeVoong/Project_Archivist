@@ -7,6 +7,7 @@ import settings
 from modules.message_manager import Message_Node, Conversation
 from nodes.node_handler import node
 from model import Model
+from llama_server_controller import LlamaServerController
 
 conv_history = []
 controller = None
@@ -60,18 +61,23 @@ def load_agent_info(agent_instruct: str, max_length: int, temperature: int,
 
     return agent_info
 
-@node(inputs=["message", "address", "type", "conversation_history", "conversation", "agent_info"], outputs=["stream_response"])
-def agent(message: str, address: str, type:str, conversation_history: list, conversation: Conversation, agent_info: dict) -> tuple[Generator]:
-    global conv, conv_history, agent_settings, agent_instruct
+@node(inputs=["message", "address", "type", "llama_controller", "conversation_history", "conversation", "agent_info"], outputs=["stream_response"])
+def agent(message: str, address: str, type:str, llama_controller:LlamaServerController, conversation_history: list, conversation: Conversation, agent_info: dict) -> tuple[Generator]:
+    global conv, conv_history, agent_settings, agent_instruct, controller
+
+    controller = llama_controller
     
-    conv_history = conversation_history
-    conv = conversation
+    # First time user is sending a message in the conversation
+    if conv_history == []:
+        conv_history = conversation_history
+        conv = conversation
 
     agent_settings = agent_info["agent_settings"]
     agent_instruct = agent_info["agent_instruct"]
 
+    # Webui live resposne
     if type == "stream":
-        conversation_history.append({"role": "user", "content": message})
+        conv_history.append({"role": "user", "content": message})
         msg_node = Message_Node("user", "User", message, "")
         user_address = conv.add_message(msg_node, address)
 

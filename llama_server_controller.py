@@ -26,6 +26,7 @@ class LlamaServerController:
         """
         Start llama server
         """
+        print("Controller starting up...")
         # TODO: Add model settings support
         command = [self.llama_server_path,
                     "--model", llm_path,
