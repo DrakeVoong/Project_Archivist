@@ -3,8 +3,8 @@ import time
 import sys
 import threading
 
-from llama_server_controller import LlamaServerController
-from model import Model
+from archivist.llama_server_controller import LlamaServerController
+from archivist.model import Model
 from archivist.message_manager import Conversation, Message_Node
 from webui.agent import Agent
 import archivist.configs.settings as settings

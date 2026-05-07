@@ -32,16 +32,19 @@ class LlamaServerController:
                     "--model", llm_path,
                     "--port", str(self.port),
                     "--device", devices,
-                    "-t", "7",
-                    "-ncmoe", "10",
-                    "-b", "2048", 
-                    "-ub", "1024",
-                    "-ctk", "q8_0", # TODO: Add support for custom quatization
-                    "-ctv", "q8_0",
-                    "-ngl", "49",
-                    "--no-mmap",
+                    "-ngl", "99",
+                    "-ncmoe", "20",
                     "-fa", "1",
-                    "-c", "32768"]
+                    "--no-mmap",
+                    # "-c", "65536",
+                    "-ctk", "q8_0",
+                    "-ctv", "q8_0",
+                    "-b", "2048", 
+                    "-ub", "2048",
+                    "--fit", "on",
+                    "--fit-target", "128",
+                    "--fit-ctx", "65536",
+                    "-t", "8"]
         
         # Support for vision
         if vision:
@@ -49,9 +52,9 @@ class LlamaServerController:
             command.append(args[0])
         
         # Support for multiple GPUs
-        if ','  in devices:
-            command.append("-ts")
-            command.append("3,3")
+        # if ','  in devices:
+        #     command.append("-ts")
+        #     command.append("3,3")
 
         # Start llama-server
         with open(self.output_file, 'w') as f:

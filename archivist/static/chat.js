@@ -256,22 +256,30 @@ async function receiveMessage() {
         const { value, done } = await reader.read();
         if (value) buffer += decoder.decode(value, { stream: true });
 
-        // extract complete lines terminated by \n
-        let nl;
-        while ((nl = buffer.indexOf("\n")) !== -1) {
-            const line = buffer.slice(0, nl).trim();
-            buffer = buffer.slice(nl + 1);
-            if (line) handleLine(line);
+        const lines = buffer.split("\n");
+        buffer = lines.pop();
+
+        for (const line of lines) {
+            if (!line) continue;
+            handleLine(line);
         }
 
+        // extract complete lines terminated by \n
+        // let nl;
+        // while ((nl = buffer.indexOf("\n")) !== -1) {
+        //     const line = buffer.slice(0, nl).trim();
+        //     buffer = buffer.slice(nl + 1);
+        //     if (line) handleLine(line);
+        // }
+
         if (done) {
-            // flush decoder and any remaining buffer
-            buffer += decoder.decode();
-            buffer = buffer.trim();
-            if (buffer) {
-                // there may be one last line without trailing \n
-                buffer.split("\n").forEach(l => { if (l.trim()) handleLine(l.trim()); });
-            }
+            // // flush decoder and any remaining buffer
+            // buffer += decoder.decode();
+            // buffer = buffer.trim();
+            // if (buffer) {
+            //     // there may be one last line without trailing \n
+            //     buffer.split("\n").forEach(l => { if (l.trim()) handleLine(l.trim()); });
+            // }
             break;
         }
     } 

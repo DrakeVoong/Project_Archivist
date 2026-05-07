@@ -6,8 +6,8 @@ from typing import Generator
 import archivist.configs.settings as settings
 from archivist.message_manager import Message_Node, Conversation
 from archivist.nodes.node_handler import node
-from model import Model
-from llama_server_controller import LlamaServerController
+from archivist.model import Model
+from archivist.llama_server_controller import LlamaServerController
 
 conv_history = []
 controller = None

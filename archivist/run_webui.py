@@ -11,8 +11,8 @@ from archivist.nodes.node_handler import NODE_REGISTRY, import_nodes
 from archivist.webui.workflow_manager import Workflow, running_workflow
 from archivist.message_manager import Conversation, Message_Node
 from archivist.webui.agent import Agent # Placeholder
-from llama_server_controller import LlamaServerController
-from model import Model
+from archivist.llama_server_controller import LlamaServerController
+from archivist.model import Model
 
 from archivist.webui.agent_tab import agent_bp
 
@@ -72,7 +72,7 @@ def home():
 def stream():
     data = request.json
 
-    # run workflow set by user
+    # initalize workflow setup by user
     workflow = Workflow()
     workflow.load_workflow_file("Archivist") # placeholder
     workflow.convert_to_nodes()
@@ -122,7 +122,7 @@ def new_chat():
 
     return Response(json.dumps({"id": current_conv.conv_id}), mimetype="application/json")
 
-if __name__ == "__main__":
+def main():
     # init_model()
 
     # t = threading.Thread(target=init_controller)

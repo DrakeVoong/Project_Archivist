@@ -3,7 +3,7 @@ import threading
 import sys
 import time
 
-from llama_server_controller import LlamaServerController
+from archivist.llama_server_controller import LlamaServerController
 from archivist.message_manager import Message_Node, Conversation
 import archivist.configs.settings as settings
 from archivist.nodes.node_handler import node
