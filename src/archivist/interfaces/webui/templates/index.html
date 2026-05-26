@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Project Archivist</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+
+    <nav id="nav-left" class="sidebar sidebar-left">
+        <div id="sidebar-header">
+            <h2 id="header-name">Project Archivist</h2>
+            <button id="sidebar-left-toggle-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-x"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <div id="nav-links">
+            <button id="btn-new-chat" class="nav-link-btn">
+                <svg class="nav-link-btn-svg icon icon-tabler icons-tabler-outline icon-tabler-message-circle-plus" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12.007 19.98a9.869 9.869 0 0 1 -4.307 -.98l-4.7 1l1.3 -3.9c-2.324 -3.437 -1.426 -7.872 2.1 -10.374c3.526 -2.501 8.59 -2.296 11.845 .48c1.992 1.7 2.93 4.04 2.747 6.34" /><path d="M16 19h6" /><path d="M19 16v6" /></svg>
+                <span class="nav-link-btn-text">New Chat</span>
+            </button>
+            <button id="btn-search-chat" class="nav-link-btn">
+                <svg class="nav-link-btn-svg icon icon-tabler icons-tabler-outline icon-tabler-search" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
+                <span class="nav-link-btn-text">Search</span>
+            </button>
+        </div>
+        <div id="chat-history-list"></div>
+    </nav>
+
+    <div id="main-content">
+
+        <div id="chat-main" class="content">
+            <div id="title-bar">
+                <div id="chat-title"></div>
+            </div>
+
+            <div id="chat-container">
+                <div id="chat-messages"></div>
+
+                <div id="chat-input-area">
+                    <div id="prompt-input-box">
+                        <textarea id="prompt-input" placeholder="Send a message to start a new conversation..."></textarea>
+                    </div>
+                    <div id="prompt-selections-box">
+                        <select id="mode-select"></select>
+                        <button id="prompt-btn-send">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="agent-settings">
+            <div id="settings-tab">
+                <h1>Model Settings</h1>
+            </div>
+
+            <div id="model-settings">
+                <div id="system-instruct">
+                    <h2>System Instruction</h2>
+                    <textarea placeholder="Enter system instructions..."></textarea>
+                </div>
+
+                <div id="hyperparameters">
+                    <h2>Hyperparameters</h2>
+                    <div class="param-row">
+                        <label for="temp">Temperature:</label>
+                        <input type="number" id="temp" min="0" max="2" step="0.1" value="1.0">
+                    </div>
+                    <div class="param-row">
+                        <label for="topp">Top p:</label>
+                        <input type="number" id="topp" min="0" max="1" step="0.01" value="0.9">
+                    </div>
+                    <div class="param-row">
+                        <label for="topk">Top k:</label>
+                        <input type="number" id="topk" min="0" max="100" step="1" value="40">
+                    </div>
+                    <div class="param-row">
+                        <label for="minp">Min p:</label>
+                        <input type="number" id="minp" min="0" max="1" step="0.01" value="0.05">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="search" class="content hidden">
+            <div id="search-bar">Search bar</div>
+            <div id="search-result">Search result</div>
+        </div>
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
+
