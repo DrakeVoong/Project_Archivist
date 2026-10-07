@@ -1,0 +1,38 @@
+# vscode
+.vscode/
+
+# Venv
+.venv
+
+# Python
+__pycache__/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+conftest.py
+
+# Docs
+docs/
+memory_context_grammar_classifiers.md
+rag_tooluse_skills_agentic_research.md
+description.md
+docs/architecture/file_organization.md
+
+# Data
+data/config.json
+data/conversations/
+data/logs/
+data/memory/
+
+# In development
+tests/conversation.py
+src/archivist/LLM_providers/serialize.py
+
+# Unused svgs
+src/archivist/interfaces/webui/static/svg/chevron-down.svg
+src/archivist/interfaces/webui/static/svg/folder.svg
+src/archivist/interfaces/webui/static/svg/message-circle.svg
+src/archivist/interfaces/webui/static/svg/messages.svg
+
