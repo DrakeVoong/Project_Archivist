@@ -1,4 +1,4 @@
-from datetime import datetime
+import time
 import uuid
 import os
 
@@ -8,15 +8,11 @@ from archivist.core.exceptions import MessageUUIDError, EmptyConversationError
 class Conversation:
 
     def __init__(self):
-        self.conv_id = uuid.uuid4()
-        self._time = datetime.now().timestamp()
+        self.conv_uuid = uuid.uuid4()
+        self.time_ns = time.time_ns()
         self.root_messages: list[MessageNode] = []
         self.uuid_index: dict[uuid.UUID, MessageNode] = {}
         self.title = ""
-
-    @property
-    def time(self):
-        return int(self._time * 1000)
 
     @classmethod
     def from_sql(cls):
@@ -43,7 +39,7 @@ class Conversation:
         if self.is_empty():
             msg = "Invalid parent message UUID. No inital message in conversation."
             msg += f"\nGot: {parent_msg_id}, Expected: None"
-            raise MessageUUIDError(msg, parent_msg_id, self.conv_id)
+            raise MessageUUIDError(msg, parent_msg_id, self.conv_uuid)
 
         parent_node = self.uuid_index[parent_msg_id] 
         parent_node.children.append(message_node)
@@ -55,7 +51,7 @@ class Conversation:
         # Empty Conversation
         if self.is_empty():
             msg = "Invalid message. Empty Conversation."
-            raise EmptyConversationError(msg, self.conv_id)
+            raise EmptyConversationError(msg, self.conv_uuid)
         
         return len(self.uuid_index[message_node.message.id].children)
 
