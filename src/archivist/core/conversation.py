@@ -46,6 +46,7 @@ class Conversation:
         message_node.parent = parent_node
         self.uuid_index[message_node.message.id] = message_node
 
+
     def get_message_children(self, message_node: MessageNode) -> int:
         
         # Empty Conversation

@@ -8,6 +8,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DATA_PATH = PROJECT_ROOT / "data"
 CONV_PATH = DATA_PATH / "conversations"
 LOG_PATH = DATA_PATH / "logs"
+AGENT_PATH = DATA_PATH / "agents"
 
 CONFIG_PATH = DATA_PATH / "config.json"
 
