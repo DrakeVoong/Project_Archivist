@@ -25,6 +25,13 @@
             </button>
         </div>
         <div id="chat-history-list"></div>
+
+        <div id="settings-link">
+            <button id="btn-settings" class="nav-link-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-link-btn-svg icon icon-tabler icons-tabler-outline icon-tabler-settings"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg>
+                <span class="nav-link-btn-text">Settings</span>
+            </button>
+        </div>
     </nav>
 
     <div id="main-content">
@@ -85,6 +92,34 @@
         <div id="search" class="content hidden">
             <div id="search-bar">Search bar</div>
             <div id="search-result">Search result</div>
+        </div>
+
+        <div id="settings" class="content hidden">
+            <h2>Settings</h2>
+            <div id="settings-body">
+                <div id="settings-nav-links">
+                    <button id="btn-settings-general" class="settings-nav-link-btn">
+                        <span class="settings-nav-link-btn-text">General</span>
+                    </button>
+                    <button id="btn-settings-analytics" class="settings-nav-link-btn">
+                        <span class="settings-nav-link-btn-text">Analytics</span>
+                    </button>
+                </div>
+                <div id="settings-content">
+                    <div id="settings-general" class="settings-sub-content">
+                        <h3>General</h3>
+                        <div id="settings-general-body">
+
+                        </div>
+                    </div>
+                    <div id="settings-analytics" class="settings-sub-content settings-hidden">
+                        <h3>Analytics</h3>
+                    </div>
+                    <div id="settings-save-bar">
+                        <button id="btn-save-settings">Save settings</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </div>

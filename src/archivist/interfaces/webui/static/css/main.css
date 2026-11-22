@@ -97,7 +97,8 @@ html, body {
 
 
 /* ── Sidebar Nav links ───────────────────────────────── */
-#nav-links {
+#nav-links,
+#settings-link {
   display: flex;
   flex-direction: column;
   align-items: start;
@@ -148,6 +149,11 @@ html, body {
   width: 0;
 }
 
+#settings-link {
+  margin-top: auto;
+  margin-bottom: 8px;;
+  width: 100%;
+}
 
 /* ── Main content area ───────────────────────────────── */
 
@@ -161,6 +167,7 @@ html, body {
 }
 
 .sidebar-left.collapsed ~ #main-content {
+  /* margin-left: calc(- var(--navbar-collapsed-width)); */
   margin-left: var(--navbar-collapsed-width);
 }
 
@@ -327,4 +334,51 @@ html, body {
   flex-direction: column;
   width: 100%;
   max-width: 800px;
+}
+
+/* ── Settings ────────────────────────────────────────── */
+
+#settings {
+  width: 100%;
+  max-width: 800px;
+}
+
+#settings h2 {
+  align-self: flex-start;
+}
+
+#settings-body {
+  display: flex;
+  flex-direction: row;
+  gap:20px;
+  width: 100%;
+  max-width: 800px;
+  height: 100%;        
+  overflow: hidden;
+}
+
+#settings-nav-links {
+  display: flex;
+  flex-direction: column;
+}
+
+#settings-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;       
+  overflow-y: auto;     
+  min-height: 0;      
+}
+
+.settings-hidden {
+  display: none !important;
+}
+
+#settings-save-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px;
+  background-color: var(--color-background);
 }
