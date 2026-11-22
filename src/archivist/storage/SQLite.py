@@ -6,6 +6,7 @@ from archivist.config.settings import CONV_PATH
 from archivist.core.message import MessageNode, AssistantMessage
 from archivist.core.conversation import Conversation
 
+# Ai once again :c
 
 class Source(IntEnum):
     CONVERSATION = 1
@@ -16,9 +17,13 @@ class Source(IntEnum):
 class SQLDB:
     """SQLite storage for conversations.
 
-    Layout: conversation -> message (tree via parent_id) -> content (ordered parts).
+    Layout: conversation -> message (tree via parent_uuid) -> content (ordered parts).
     assistant_message holds assistant-only metadata (1:1 with message).
     Messages are immutable; edits are stored as new sibling branches.
+
+    Every table is keyed by the same uuid the in-memory objects use, so there
+    is no uuid <-> integer translation layer. Rows are returned in insertion
+    order via the implicit rowid (tie-break after time_ns).
     """
 
     def __init__(self):
@@ -46,26 +51,25 @@ class SQLDB:
         logic: a version mismatch raises, so bump SCHEMA_VERSION on any
         incompatible change and delete/migrate the old file.
         """
-        SCHEMA_VERSION = 2  # bumped: integer conv_id replaced conv_uuid FK
+        SCHEMA_VERSION = 3  # bumped: uuid TEXT primary keys replaced integer ids
 
         # Build the CHECK from the enum so Python and SQL can't drift apart
         source_values = ",".join(str(s.value) for s in Source)
 
-        # One row per conversation. id is the internal key, uuid the external one.
+        # One row per conversation, keyed by its uuid.
+        # NOT NULL is explicit: SQLite allows NULL in non-integer primary keys.
         CONVERSATION = """CREATE TABLE IF NOT EXISTS conversation (
-            id          INTEGER PRIMARY KEY,
-            uuid        TEXT NOT NULL UNIQUE,
+            uuid        TEXT NOT NULL PRIMARY KEY,
             title       TEXT,
             time_ns     INTEGER NOT NULL
         ) STRICT;"""
 
-        # One row per message. parent_id forms the branch tree: siblings share
-        # a parent, and root messages have parent_id NULL.
+        # One row per message. parent_uuid forms the branch tree: siblings share
+        # a parent, and root messages have parent_uuid NULL.
         MESSAGE = f"""CREATE TABLE IF NOT EXISTS message (
-            id          INTEGER PRIMARY KEY,
-            uuid        TEXT NOT NULL UNIQUE,
-            conv_id     INTEGER NOT NULL REFERENCES conversation(id) ON DELETE CASCADE,
-            parent_id   INTEGER REFERENCES message(id) ON DELETE CASCADE,
+            uuid        TEXT NOT NULL PRIMARY KEY,
+            conv_uuid   TEXT NOT NULL REFERENCES conversation(uuid) ON DELETE CASCADE,
+            parent_uuid TEXT REFERENCES message(uuid) ON DELETE CASCADE,
             source      INTEGER NOT NULL CHECK (source IN ({source_values})),
             role        TEXT NOT NULL CHECK (role IN ('system','user','assistant','tool')),
             name        TEXT,
@@ -74,34 +78,34 @@ class SQLDB:
 
         # Ordered parts of a message: text, or a file path for imgs, videos, etc.
         CONTENT = """CREATE TABLE IF NOT EXISTS content (
-            id          INTEGER PRIMARY KEY,
-            message_id  INTEGER NOT NULL REFERENCES message(id) ON DELETE CASCADE,
-            position    INTEGER NOT NULL DEFAULT 0,
-            type        TEXT NOT NULL,
-            text        TEXT,
-            path        TEXT,
-            UNIQUE (message_id, position),
+            id           INTEGER PRIMARY KEY,
+            message_uuid TEXT NOT NULL REFERENCES message(uuid) ON DELETE CASCADE,
+            position     INTEGER NOT NULL DEFAULT 0,
+            type         TEXT NOT NULL,
+            text         TEXT,
+            path         TEXT,
+            UNIQUE (message_uuid, position),
             CHECK (text IS NOT NULL OR path IS NOT NULL)
         ) STRICT;"""
 
         # Assistant-only tracking data (1:1 with message). Insert together
         # with the message, inside the same transaction.
         ASSISTANT = """CREATE TABLE IF NOT EXISTS assistant_message (
-            message_id    INTEGER PRIMARY KEY REFERENCES message(id) ON DELETE CASCADE,
+            message_uuid  TEXT NOT NULL PRIMARY KEY REFERENCES message(uuid) ON DELETE CASCADE,
             model         TEXT NOT NULL,
             finish_reason TEXT
         ) STRICT;"""
 
-        # content(message_id) is already covered by UNIQUE(message_id, position)
-        INDEXES = """CREATE INDEX IF NOT EXISTS idx_message_conv   ON message(conv_id);
-        CREATE INDEX IF NOT EXISTS idx_message_parent ON message(parent_id);
+        # content(message_uuid) is already covered by UNIQUE(message_uuid, position)
+        INDEXES = """CREATE INDEX IF NOT EXISTS idx_message_conv   ON message(conv_uuid);
+        CREATE INDEX IF NOT EXISTS idx_message_parent ON message(parent_uuid);
         """
 
         # # Tool Dataclass
         # TOOL = """CREATE TABLE IF NOT EXISTS tool_message (
-        #     message_id  INTEGER PRIMARY KEY REFERENCES message(id) ON DELETE CASCADE,
-        #     success     INTEGER NOT NULL DEFAULT 0,
-        #     retry       INTEGER NOT NULL DEFAULT 0
+        #     message_uuid TEXT NOT NULL PRIMARY KEY REFERENCES message(uuid) ON DELETE CASCADE,
+        #     success      INTEGER NOT NULL DEFAULT 0,
+        #     retry        INTEGER NOT NULL DEFAULT 0
         # ) STRICT;"""
 
         SCHEMA = "\n".join([CONVERSATION, MESSAGE, CONTENT, ASSISTANT, INDEXES])
@@ -114,35 +118,10 @@ class SQLDB:
         elif version != SCHEMA_VERSION:
             raise RuntimeError(f"DB schema v{version}, code expects v{SCHEMA_VERSION}")
 
-    # ---------- id lookups ----------
+    # ---------- inserts ----------
 
-    def _get_conv_id(self, conv_uuid: uuid.UUID) -> int:
-        """Return the internal integer id for a conversation uuid.
-
-        Raises ValueError if the conversation isn't in the DB.
-        """
-        row = self.conn.execute(
-            "SELECT id FROM conversation WHERE uuid = ?", (str(conv_uuid),)
-        ).fetchone()
-        if row is None:
-            raise ValueError(f"conversation {conv_uuid} not in DB")
-        return row["id"]
-
-    def _get_db_id(self, msg_uuid: uuid.UUID) -> int:
-        """Return the internal integer id for a message uuid.
-
-        Raises ValueError if the message isn't in the DB (e.g. a parent that
-        was never inserted).
-        """
-        row = self.conn.execute(
-            "SELECT id FROM message WHERE uuid = ?", (str(msg_uuid),)
-        ).fetchone()
-        if row is None:
-            raise ValueError(f"message {msg_uuid} not in DB")
-        return row["id"]
-
-    def _ensure_conversation(self, conv: Conversation) -> int:
-        """Insert the conversation row if it doesn't exist; return its internal id.
+    def _ensure_conversation(self, conv: Conversation):
+        """Insert the conversation row if it doesn't exist.
 
         Existing rows are left untouched (INSERT OR IGNORE), so a changed
         title is NOT updated here.
@@ -151,44 +130,39 @@ class SQLDB:
             "INSERT OR IGNORE INTO conversation (uuid, title, time_ns) VALUES (?, ?, ?)",
             (str(conv.conv_uuid), conv.title, conv.time_ns),
         )
-        return self._get_conv_id(conv.conv_uuid)
 
-    # ---------- inserts ----------
-
-    def _insert_message(self, node: MessageNode, conv_id: int, source: Source) -> int:
+    def _insert_message(self, node: MessageNode, conv_uuid: uuid.UUID, source: Source):
         """Insert one message plus its content (and assistant row if applicable).
 
         Does not open a transaction; callers must wrap it in `with self.conn`
         so the message, content, and assistant rows commit or fail together.
-        The parent message must already be in the DB. Returns the message's
-        internal id.
+        The parent message must already be in the DB: the foreign key on
+        parent_uuid raises sqlite3.IntegrityError otherwise.
         """
         msg = node.message
-        parent_db_id = None if node.parent_id is None else self._get_db_id(node.parent_id)
+        msg_uuid = str(msg.id)
+        parent_uuid = None if node.parent_id is None else str(node.parent_id)
 
-        cur = self.conn.execute(
-            """INSERT INTO message (uuid, conv_id, parent_id, source, role, name, time_ns)
+        self.conn.execute(
+            """INSERT INTO message (uuid, conv_uuid, parent_uuid, source, role, name, time_ns)
             VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (str(msg.id), conv_id, parent_db_id, int(source),
+            (msg_uuid, str(conv_uuid), parent_uuid, int(source),
              msg.role, msg.name or None, msg.time_ns),
         )
-        msg_db_id = cur.lastrowid
 
         # Temporary until basic text is stable
         self.conn.execute(
-            """INSERT INTO content (message_id, position, type, text)
+            """INSERT INTO content (message_uuid, position, type, text)
             VALUES (?, ?, ?, ?)""",
-            (msg_db_id, 0, "text", msg.content.text),
+            (msg_uuid, 0, "text", msg.content.text),
         )
 
-        # NOTE: attribute names assumed, adjust to your AssistantMessage dataclass
         if isinstance(msg, AssistantMessage):
             self.conn.execute(
-                """INSERT INTO assistant_message (message_id, model, finish_reason)
+                """INSERT INTO assistant_message (message_uuid, model, finish_reason)
                 VALUES (?, ?, ?)""",
-                (msg_db_id, msg.model, msg.finish_reason or None),
+                (msg_uuid, msg.model, msg.finish_reason or None),
             )
-        return msg_db_id
 
     def insert_message_node(self, node: MessageNode, conv: Conversation):
         """Persist a single new message, creating the conversation row if needed.
@@ -197,8 +171,8 @@ class SQLDB:
         The parent node must already have been inserted. Runs in one transaction.
         """
         with self.conn:
-            conv_id = self._ensure_conversation(conv)
-            self._insert_message(node, conv_id, Source.CONVERSATION)
+            self._ensure_conversation(conv)
+            self._insert_message(node, conv.conv_uuid, Source.CONVERSATION)
 
     def insert_conversation(self, conv: Conversation):
         """Persist an entire in-memory conversation in one transaction.
@@ -207,53 +181,57 @@ class SQLDB:
         iterating in insertion order so parents are inserted before children.
         """
         with self.conn:
-            cur = self.conn.execute(
+            self.conn.execute(
                 "INSERT INTO conversation (uuid, title, time_ns) VALUES (?, ?, ?)",
                 (str(conv.conv_uuid), conv.title, conv.time_ns),
             )
-            conv_id = cur.lastrowid
             for node in conv.uuid_index.values():
-                self._insert_message(node, conv_id, Source.CONVERSATION)
+                self._insert_message(node, conv.conv_uuid, Source.CONVERSATION)
 
     # ---------- reads ----------
 
     def get_conversation(self, conv_uuid: uuid.UUID) -> list[dict]:
         """Load every message in a conversation (all branches), oldest first.
 
-        Each dict is a message row plus:
-          - parent_uuid: uuid of the parent message (None for roots)
+        Each dict is a message row (uuid, conv_uuid, parent_uuid, source, role,
+        name, time_ns) plus:
           - model, finish_reason: assistant metadata (None for non-assistant)
           - content: list of content rows ordered by position
-        Uses three queries total (messages, then all content), not one per message.
+        Uses three queries total (existence check, messages, then all content),
+        not one per message.
         Raises ValueError if the conversation doesn't exist.
         """
-        conv_id = self._get_conv_id(conv_uuid)
+        conv_key = str(conv_uuid)
+
+        exists = self.conn.execute(
+            "SELECT 1 FROM conversation WHERE uuid = ?", (conv_key,)
+        ).fetchone()
+        if exists is None:
+            raise ValueError(f"conversation {conv_uuid} not in DB")
 
         messages = [
             dict(r) for r in self.conn.execute(
-                """SELECT m.*, p.uuid AS parent_uuid,
-                          a.model, a.finish_reason
+                """SELECT m.*, a.model, a.finish_reason
                 FROM message m
-                LEFT JOIN message p ON p.id = m.parent_id
-                LEFT JOIN assistant_message a ON a.message_id = m.id
-                WHERE m.conv_id = ?
-                ORDER BY m.id""",
-                (conv_id,),
+                LEFT JOIN assistant_message a ON a.message_uuid = m.uuid
+                WHERE m.conv_uuid = ?
+                ORDER BY m.time_ns, m.rowid""",
+                (conv_key,),
             )
         ]
-        # Index by internal id so content rows can be attached in one pass
-        by_id = {m["id"]: m for m in messages}
+        # Index by uuid so content rows can be attached in one pass
+        by_uuid = {m["uuid"]: m for m in messages}
         for m in messages:
             m["content"] = []
 
         for c in self.conn.execute(
             """SELECT c.* FROM content c
-            JOIN message m ON m.id = c.message_id
-            WHERE m.conv_id = ?
-            ORDER BY c.message_id, c.position""",
-            (conv_id,),
+            JOIN message m ON m.uuid = c.message_uuid
+            WHERE m.conv_uuid = ?
+            ORDER BY c.message_uuid, c.position""",
+            (conv_key,),
         ):
-            by_id[c["message_id"]]["content"].append(dict(c))
+            by_uuid[c["message_uuid"]]["content"].append(dict(c))
 
         return messages
 
