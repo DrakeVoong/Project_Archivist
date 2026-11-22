@@ -1,25 +1,22 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Optional, List, ClassVar
-from datetime import datetime
+from typing import Optional, ClassVar
 import time
 import uuid
 
-from archivist.LLM_providers.LLM_provider import LLMProvider
-
 
 @dataclass
-class ContentType:
+class Content:
     text: str
     image: Optional[str] = None
 
-@dataclass
+@dataclass(frozen=True)
 class Message:
     role: ClassVar[str]
     name: str
-    content: ContentType
+    content: Content
     id: uuid.UUID = field(init=False, default_factory=uuid.uuid4)
-    time_ns: float = field(init=False, default_factory=time.time_ns)
+    time_ns: int = field(init=False, default_factory=time.time_ns)
 
 @dataclass
 class MessageNode:
@@ -31,21 +28,21 @@ class MessageNode:
     def parent_id(self):
         return self.parent.message.id if self.parent else None
 
-@dataclass
+@dataclass(frozen=True)
 class SystemMessage(Message):
     role: ClassVar[str] = "system"
 
-@dataclass
+@dataclass(frozen=True)
 class UserMessage(Message):
     role: ClassVar[str] = "user"
 
-@dataclass
+@dataclass(frozen=True)
 class AssistantMessage(Message):
     role: ClassVar[str] = "assistant"
     model: str = ""
     finish_reason: str = ""
 
-@dataclass 
+@dataclass(frozen=True)
 class ToolMessage(Message):
     role: ClassVar[str] = "tool"
     success: bool = False

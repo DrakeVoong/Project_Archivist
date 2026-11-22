@@ -3,7 +3,7 @@ import time
 from archivist.core.agent import Agent
 from archivist.core.conversation import Conversation
 from archivist.core.exceptions import TimeoutError
-from archivist.core.message import Message, MessageNode, ContentType, UserMessage, AssistantMessage, SystemMessage
+from archivist.core.message import Message, Content, UserMessage, AssistantMessage, SystemMessage
 from archivist.LLM_providers.llamacpp_server import LlamaCPPServer
 from archivist.LLM_providers.serialize import convert_to_openai
 from archivist.storage.SQLite import SQLDB
@@ -12,7 +12,7 @@ def build_context(conversation:Conversation, agent:Agent) -> list[dict[str, str]
     message_nodes = conversation.get_message_chain()
 
     # Create system message
-    system_content = ContentType(agent.system_instruct)
+    system_content = Content(agent.system_instruct)
     system_message = SystemMessage("system", system_content)
     system_message = convert_to_openai(system_message)
 
@@ -48,29 +48,29 @@ def main():
             raise TimeoutError(f"llama.cpp server did not start in {TIMEOUT} seconds.")
 
 
-    DB = SQLDB()
+    db = SQLDB()
     CLaRA = Agent("CLaRA") # primary agent
-    convo = Conversation()
+    conv = Conversation()
 
     user_name = "User"
 
     while(True):
         print(f"{user_name}: ")
         user_response = input()
-        user_content = ContentType(user_response)
+        user_content = Content(user_response)
         user_message = UserMessage(user_name, user_content)
-        user_node = add_and_save(user_message, convo, DB)
+        add_and_save(user_message, conv, db)
 
 
-        context = build_context(convo, CLaRA)
+        context = build_context(conv, CLaRA)
         response = llama_cpp.generate(context)
         agent_response = response["choices"][0]["message"]["content"]
 
         print(f"{CLaRA.name}: {agent_response}")
 
-        agent_content = ContentType(agent_response)
+        agent_content = Content(agent_response)
         agent_message = AssistantMessage(CLaRA.name, agent_content, response["model"], response["choices"][0]["finish_reason"])
-        agent_node = add_and_save(agent_message, convo, DB)
+        add_and_save(agent_message, conv, db)
 
 if __name__ == "__main__":
     main()
