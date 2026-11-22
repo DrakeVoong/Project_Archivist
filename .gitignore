@@ -29,7 +29,6 @@ data/memory/
 
 # In development
 tests/conversation.py
-src/archivist/LLM_providers/serialize.py
 
 # Unused svgs
 src/archivist/interfaces/webui/static/svg/chevron-down.svg
