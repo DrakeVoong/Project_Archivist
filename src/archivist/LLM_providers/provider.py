@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Generator
 
 
-class LLMProvider(ABC):
+class Provider(ABC):
     @abstractmethod
     def connect(self, config: list) -> int:
         pass

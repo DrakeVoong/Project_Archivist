@@ -8,31 +8,35 @@ This file contains the structure of the files in the project and file naming con
 
 PROJECT_ARCHIVIST/
 ├── archivist/
+│   ├── config/
+│   │   └── settings.py
+│   │
 │   ├── core/
-│   │   ├── orchestrator.py
-│   │   ├── planner.py
-│   │   ├── router.py
-│   │   └── context.py
+│   │   ├── agent.py
+│   │   ├── conversation.py
+│   │   ├── exceptions.py
+│   │   ├── harness.py
+│   │   └── message.py
 │   │
-│   ├── agents/
-│   ├── tools/
-│   ├── memory/
-│   │   ├── store.py
-│   │   ├── embeddings.py
-│   │   └── vector_index.py
+│   ├── interfaces/
+│   │   ├── cli/
+│   │   └── webui/
 │   │
-│   ├── models/
-│   ├── webui/
-│   └── utils/
+│   ├── LLM_providers/
+│   │   ├── llamacpp_server.py
+│   │   ├── LLM_provider.py
+│   │   └── serialize.py
+│   │
+│   └── storage/
+│       └── SQLite.py
 │
-├── data/                     # ALL runtime state
+├── data/                       # runtime generated data
 │   ├── agents/
-│   ├── conversations/
-│   ├── memory/
-│   ├── vectors/
-│   └── caches/
+│   │   └── CLaRa/              # main agent
+│   └── conversations/
+│   │   └── conversations.db
 │
-├── labs/
+├── labs/                       # not yet implemented
 │   ├── agent_loops/
 │   └── prototypes/
 │

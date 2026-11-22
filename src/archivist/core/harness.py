@@ -4,8 +4,8 @@ from archivist.core.agent import Agent
 from archivist.core.conversation import Conversation
 from archivist.core.exceptions import TimeoutError
 from archivist.core.message import Message, Content, UserMessage, AssistantMessage, SystemMessage
-from archivist.LLM_providers.llamacpp_server import LlamaCPPServer
-from archivist.LLM_providers.serialize import convert_to_openai
+from archivist.llm_providers.llamacpp_server import LlamaCPPServer
+from archivist.llm_providers.serialize import convert_to_openai
 from archivist.storage.SQLite import SQLDB
 
 def build_context(conversation:Conversation, agent:Agent) -> list[dict[str, str]]:

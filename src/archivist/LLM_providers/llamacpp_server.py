@@ -6,10 +6,10 @@ from typing import Generator
 
 # from archivist.LLM_providers.LLM_provider import LLMProvider
 from archivist.config.settings import settings, LOG_PATH
-from archivist.LLM_providers.LLM_provider import LLMProvider
+from archivist.llm_providers.provider import Provider
 
 
-class LlamaCPPServer(LLMProvider):
+class LlamaCPPServer(Provider):
     def __init__(self, port: str):
         self.llama_server_path = settings.LLAMA_CPP_DIR / "llama-server"
         self.port = port
