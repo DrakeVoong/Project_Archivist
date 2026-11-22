@@ -2,8 +2,8 @@ import time
 import uuid
 import os
 
-from archivist.core.message import MessageNode
-from archivist.core.exceptions import MessageUUIDError, EmptyConversationError
+from archivist.core.message import MessageNode, Message
+from archivist.core.exceptions import EmptyConversationError
 
 class Conversation:
 
@@ -13,6 +13,7 @@ class Conversation:
         self.root_messages: list[MessageNode] = []
         self.uuid_index: dict[uuid.UUID, MessageNode] = {}
         self.title = ""
+        self.active_node:MessageNode | None = None
 
     @classmethod
     def from_sql(cls):
@@ -26,26 +27,45 @@ class Conversation:
             return self.uuid_index[msg_id]
         except KeyError:
             return None
-        
-    def add_message(self, message_node: MessageNode, parent_msg_id: uuid.UUID|None = None):
 
-        # Add a new root message
-        if parent_msg_id is None:
-            self.root_messages.append(message_node)
-            self.uuid_index[message_node.message.id] = message_node
-            return
-            
-        # Empty Conversation check with uuid given
+    def append(self, message:Message) -> MessageNode:
+        node = MessageNode(message, self.active_node)
+        if self.active_node:
+            self.active_node.children.append(node)
+
+        self._register(node)
+        return node
+
+    def branch(self, message: Message, parent: MessageNode) -> MessageNode:
+        """Edits/Regenerate of messages"""
+        node = MessageNode(message, parent=parent)
+        parent.children.append(node)
+        self._register(node)
+        return node
+
+    def _register(self, node):
+        self.uuid_index[node.message.id] = node
+        if node.parent is None:
+            self.root_messages.append(node)
+        self.active_node = node
+
+
+    def get_message_chain(self) -> list[MessageNode]:
         if self.is_empty():
-            msg = "Invalid parent message UUID. No inital message in conversation."
-            msg += f"\nGot: {parent_msg_id}, Expected: None"
-            raise MessageUUIDError(msg, parent_msg_id, self.conv_uuid)
+            msg = "Invalid message. Empty Conversation."
+            raise EmptyConversationError(msg, self.conv_uuid)
+        
+        if self.active_node is None:
+            raise ValueError("Active Node is not defined.")
 
-        parent_node = self.uuid_index[parent_msg_id] 
-        parent_node.children.append(message_node)
-        message_node.parent = parent_node
-        self.uuid_index[message_node.message.id] = message_node
+        message_nodes:list[MessageNode] = []
+        curr = self.active_node
+        while(curr is not None):
+            message_nodes.append(curr)
+            curr = curr.parent
 
+        message_nodes.reverse()
+        return message_nodes
 
     def get_message_children(self, message_node: MessageNode) -> int:
         

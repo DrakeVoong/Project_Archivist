@@ -10,17 +10,14 @@ from archivist.core.message import MessageNode
 # TODO: implement conversation construction to pass to provider
 
 class Agent:
-    def __init__(self, provider:LLMProvider, name:str, conversation:Conversation) -> None:
-        self.provider = provider
+    def __init__(self, name:str) -> None:
         self.name = name
-        self._get_agent_sys_instruct()
+        self.AGENT_DIR = Path(AGENT_PATH / name)
+        self._load_sys_instruct()
 
-    def _get_agent_sys_instruct(self):
-        sys_instruct_path = Path(AGENT_PATH / f"{self.name}.md")
+    def _load_sys_instruct(self):
+        sys_instruct_path = Path(self.AGENT_DIR / f"{self.name}.md")
         if not sys_instruct_path.exists():
             raise FileNotFoundError(f'File {sys_instruct_path} not found.') 
 
         self.system_instruct = sys_instruct_path.read_text()
-
-    def generate_response(self, message_node:MessageNode):
-        self.provider.generate(message_node.message.content.text)
