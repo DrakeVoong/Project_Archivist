@@ -1,5 +1,6 @@
 import time
 from openai.types.chat import ChatCompletionMessageParam
+import json
 
 from archivist.core.agent import Agent
 from archivist.core.conversation import Conversation
@@ -8,6 +9,7 @@ from archivist.core.message import Message, Content, UserMessage, AssistantMessa
 from archivist.llm_providers.llamacpp_server import LlamaCPPServer
 from archivist.llm_providers.serialize import convert_to_openai
 from archivist.storage.SQLite import SQLDB
+from archivist.core.tool import call_tool, get_tools
 
 def build_context(conversation:Conversation, agent:Agent) -> list[ChatCompletionMessageParam]:
     message_nodes = conversation.get_message_chain()
@@ -28,26 +30,10 @@ def add_and_save(message:Message, conversation:Conversation, db:SQLDB):
     db.insert_message_node(node, conversation)
     return node
 
-# -- Defining Tools
-
-tools = [{
-    "type": "function",
-    "function": {
-        "name": "add",
-        "description": "Add two numbers",
-        "parameters": {
-            "type": "object",
-            "properties": {"a": {"type": "number"}, "b": {"type": "number"}},
-            "required": ["a", "b"],
-        },
-    },
-}]
-
-
 config = [
     "-fa", "1",
     "--fit-target", "128",
-    "--fit-ctx", "8192",
+    "--fit-ctx", "65536",
     "-np", "1",
 ]
 
@@ -81,19 +67,56 @@ def main():
         add_and_save(user_message, conv, db)
 
         context = build_context(conv, CLaRA) # build llm input using CLaRA system instruct
-        response = llama_cpp.generate_openai(context, tools)
+        response = llama_cpp.generate_openai(context, get_tools())
 
-        print(response)
         # llm response text
         agent_response = response.choices[0].message.content
 
+        # print(response.to_json())
         if agent_response is None:
             raise ValueError()
 
+        while response.choices[0].finish_reason == "tool_calls":
+            tool_calls = response.choices[0].message.tool_calls
+            if not tool_calls:
+                raise ValueError("Response indicated tool calls but provided none.")
+            tool_call = tool_calls[0]
+            if tool_call.type != "function":
+                raise ValueError("Unsupported custom tool call.")
+
+            agent_content = Content(agent_response)
+            agent_message = AssistantMessage(CLaRA.name, 
+                                             agent_content, 
+                                             getattr(response.choices[0].message, "reasoning_content", None), 
+                                             response.model, 
+                                             response.choices[0].finish_reason, 
+                                             tool_calls
+                                             )
+            add_and_save(agent_message, conv, db)
+            
+            name = tool_call.function.name
+            args = json.loads(tool_call.function.arguments)
+            tool_call_id = tool_call.id
+            tool_content = Content(call_tool(name, args))
+            tool_message = ToolMessage(name, tool_content, tool_call_id)
+            add_and_save(tool_message, conv, db)
+
+            context = build_context(conv, CLaRA) # build llm input using CLaRA system instruct
+            response = llama_cpp.generate_openai(context, get_tools())
+            agent_response = response.choices[0].message.content
+
+            if agent_response is None:
+                raise ValueError()
+
         print(f"{CLaRA.name}: {agent_response}")
-        
+
         agent_content = Content(agent_response)
-        agent_message = AssistantMessage(CLaRA.name, agent_content, response.model, response.choices[0].finish_reason)
+        agent_message = AssistantMessage(CLaRA.name, 
+                                         agent_content, 
+                                         getattr(response.choices[0].message, "reasoning_content", None), 
+                                         response.model, 
+                                         response.choices[0].finish_reason
+                                         )
         add_and_save(agent_message, conv, db)
 
 if __name__ == "__main__":

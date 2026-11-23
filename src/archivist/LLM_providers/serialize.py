@@ -9,8 +9,13 @@ def convert_to_openai(message: Message) -> ChatCompletionMessageParam:
         case UserMessage():
             return {"role":"user", "content":message.content.text}
         case AssistantMessage():
-            return {"role":"assistant", "content":message.content.text}
+            openai_message = {"role":"assistant", "content":message.content.text}
+            if message.reasoning:
+                openai_message["reasoning_content"] = message.reasoning
+            if message.tool_calls:
+                openai_message["tool_calls"] = message.tool_calls
+            return openai_message
         case ToolMessage():
-            raise NotImplementedError("ToolMessage serialization not yet implemented")
+            return {"role":"tool", "tool_call_id":message.tool_call_id, "content":message.content.text}
         case _:
             raise TypeError("Not a valid Message class")

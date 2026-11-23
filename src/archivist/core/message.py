@@ -39,11 +39,14 @@ class UserMessage(Message):
 @dataclass(frozen=True)
 class AssistantMessage(Message):
     role: ClassVar[str] = "assistant"
+    reasoning: str | None = None
     model: str = ""
     finish_reason: str = ""
+    tool_calls: list[dict] | None = None
 
 @dataclass(frozen=True)
 class ToolMessage(Message):
     role: ClassVar[str] = "tool"
+    tool_call_id: str
     success: bool = False
     retry: int = 0

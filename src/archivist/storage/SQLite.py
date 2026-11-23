@@ -92,6 +92,7 @@ class SQLDB:
         # with the message, inside the same transaction.
         ASSISTANT = """CREATE TABLE IF NOT EXISTS assistant_message (
             message_uuid  TEXT NOT NULL PRIMARY KEY REFERENCES message(uuid) ON DELETE CASCADE,
+            reasoning     TEXT,
             model         TEXT NOT NULL,
             finish_reason TEXT
         ) STRICT;"""
@@ -159,9 +160,9 @@ class SQLDB:
 
         if isinstance(msg, AssistantMessage):
             self.conn.execute(
-                """INSERT INTO assistant_message (message_uuid, model, finish_reason)
-                VALUES (?, ?, ?)""",
-                (msg_uuid, msg.model, msg.finish_reason or None),
+                """INSERT INTO assistant_message (message_uuid, reasoning, model, finish_reason)
+                VALUES (?, ?, ?, ?)""",
+                (msg_uuid, msg.reasoning, msg.model, msg.finish_reason or None),
             )
 
     def insert_message_node(self, node: MessageNode, conv: Conversation):
