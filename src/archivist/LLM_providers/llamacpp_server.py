@@ -1,10 +1,16 @@
 import json
 import subprocess
 import requests
-from typing import Generator
+from typing import Generator, Iterable
+from openai import OpenAI
+from openai import OpenAI, omit
+from openai.types.chat import (
+    ChatCompletion,
+    ChatCompletionChunk,
+    ChatCompletionMessageParam,
+    ChatCompletionToolUnionParam,
+)
 
-
-# from archivist.LLM_providers.LLM_provider import LLMProvider
 from archivist.config.settings import settings, LOG_PATH
 from archivist.llm_providers.provider import Provider
 
@@ -16,11 +22,12 @@ class LlamaCPPServer(Provider):
         self.running = False
         self.log_file = LOG_PATH / "llama_server_log.txt"
         self.API_URL = f"http://127.0.0.1:{self.port}/v1/chat/completions"
+        self.client = OpenAI(base_url=f"http://127.0.0.1:{self.port}/v1", api_key="none")
+        self.model = "local"
 
-    # Implementation for router mode
     def connect(self, config: list):
         """
-        Start llama-server
+        Start llama-server in router mode
         """
 
         command = [self.llama_server_path, "--models-dir", settings.LLMS_DIR, *config]
@@ -31,10 +38,9 @@ class LlamaCPPServer(Provider):
 
         return 1
 
-    # Implementation for direct model loading
     def connect_model(self, model:str, config:list):
         """
-        Start llama-server
+        Start llama-server in direct model loading mode
         """
 
         command = [self.llama_server_path, 
@@ -43,7 +49,7 @@ class LlamaCPPServer(Provider):
                    *config
                    ]
 
-        # Start llama-server
+        # Execute the llama-server command as a seperate process
         with open(self.log_file, 'w') as f:
             self.process = subprocess.Popen(command, stdout=f, stderr=subprocess.STDOUT, text=True)
             self.running = True
@@ -51,10 +57,16 @@ class LlamaCPPServer(Provider):
         return 1
 
     def get_available_models(self):
+        """
+        Not Implemented yet
+        """
         if not self.running:
             return -1
         
-    def generate(self, messages):
+    def generate(self, messages:list[dict[str,str]]):
+        """
+        Generate an LLM response using requests module
+        """
         data = {
             "messages": messages,
             "stream": False,
@@ -67,6 +79,18 @@ class LlamaCPPServer(Provider):
         response = requests.post(self.API_URL, json=data)
         response.raise_for_status()
         return response.json()
+
+    def generate_openai(self, messages: Iterable[ChatCompletionMessageParam], 
+                        tools: Iterable[ChatCompletionToolUnionParam] | None = None) -> ChatCompletion:
+        response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                tools=tools if tools else omit,
+                temperature=0.9,
+                top_p=0.9,
+                extra_body={"top_k": 40, "min_p": 0},
+                )
+        return response
 
     def generate_stream(self, messages:str) -> Generator:
         payload = {"messages": messages, "stream": True}

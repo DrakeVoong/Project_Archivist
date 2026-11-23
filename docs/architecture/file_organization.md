@@ -22,7 +22,7 @@ PROJECT_ARCHIVIST/
 │   │   ├── cli/
 │   │   └── webui/
 │   │
-│   ├── LLM_providers/
+│   ├── llm_providers/
 │   │   ├── llamacpp_server.py
 │   │   ├── LLM_provider.py
 │   │   └── serialize.py
@@ -32,7 +32,7 @@ PROJECT_ARCHIVIST/
 │
 ├── data/                       # runtime generated data
 │   ├── agents/
-│   │   └── CLaRa/              # main agent
+│   │   └── CLaRA/              # main agent
 │   └── conversations/
 │   │   └── conversations.db
 │

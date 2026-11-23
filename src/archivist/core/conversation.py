@@ -25,6 +25,9 @@ class Conversation:
         return self.uuid_index.get(msg_id)
 
     def append(self, message:Message) -> MessageNode:
+        """
+        Append a new message into the most recent/follow-up message. (active node)
+        """
         node = MessageNode(message, self.active_node)
         if self.active_node:
             self.active_node.children.append(node)
@@ -33,7 +36,7 @@ class Conversation:
         return node
 
     def branch(self, message: Message, parent: MessageNode) -> MessageNode:
-        """Edits/Regenerate of messages"""
+        """Edits/Regeneration of a message"""
         node = MessageNode(message, parent=parent)
         parent.children.append(node)
         self._register(node)
@@ -47,6 +50,7 @@ class Conversation:
 
 
     def get_message_chain(self) -> list[MessageNode]:
+        """Get a single branch of the message tree based on the active message."""
         if self.is_empty():
             msg = "Invalid message. Empty Conversation."
             raise EmptyConversationError(msg, self.conv_uuid)
