@@ -88,7 +88,7 @@ class LlamaCPPServer(Provider):
                 tools=tools if tools else omit,
                 temperature=0.9,
                 top_p=0.9,
-                extra_body={"top_k": 40, "min_p": 0},
+                extra_body={"top_k": 40, "min_p": 0}, # sampling parameters in llama.cpp but not in openai
                 )
         return response
 

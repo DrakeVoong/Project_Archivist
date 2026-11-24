@@ -42,7 +42,13 @@ class AssistantMessage(Message):
     reasoning: str | None = None
     model: str = ""
     finish_reason: str = ""
-    tool_calls: list[dict] | None = None
+    tool_calls: tuple[ToolCall, ...] = ()
+    
+@dataclass(frozen=True)
+class ToolCall:
+    id: str
+    name: str
+    arguments: str
 
 @dataclass(frozen=True)
 class ToolMessage(Message):

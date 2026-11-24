@@ -48,7 +48,6 @@ class Conversation:
             self.root_messages.append(node)
         self.active_node = node
 
-
     def get_message_chain(self) -> list[MessageNode]:
         """Get a single branch of the message tree based on the active message."""
         if self.is_empty():

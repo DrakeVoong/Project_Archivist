@@ -1,9 +1,12 @@
 import sqlite3
 import uuid
 from enum import IntEnum
+import json
+from dataclasses import asdict
+
 
 from archivist.config.settings import CONV_PATH
-from archivist.core.message import MessageNode, AssistantMessage
+from archivist.core.message import MessageNode, AssistantMessage, ToolMessage
 from archivist.core.conversation import Conversation
 
 # Ai once again :c
@@ -94,7 +97,17 @@ class SQLDB:
             message_uuid  TEXT NOT NULL PRIMARY KEY REFERENCES message(uuid) ON DELETE CASCADE,
             reasoning     TEXT,
             model         TEXT NOT NULL,
-            finish_reason TEXT
+            finish_reason TEXT,
+            tool_calls    TEXT
+        ) STRICT;"""
+
+
+        # Tool Dataclass
+        TOOL = """CREATE TABLE IF NOT EXISTS tool_message (
+            message_uuid TEXT NOT NULL PRIMARY KEY REFERENCES message(uuid) ON DELETE CASCADE,
+            tool_call_id TEXT NOT NULL,   
+            success      INTEGER NOT NULL DEFAULT 0,
+            retry        INTEGER NOT NULL DEFAULT 0
         ) STRICT;"""
 
         # content(message_uuid) is already covered by UNIQUE(message_uuid, position)
@@ -102,14 +115,7 @@ class SQLDB:
         CREATE INDEX IF NOT EXISTS idx_message_parent ON message(parent_uuid);
         """
 
-        # # Tool Dataclass
-        # TOOL = """CREATE TABLE IF NOT EXISTS tool_message (
-        #     message_uuid TEXT NOT NULL PRIMARY KEY REFERENCES message(uuid) ON DELETE CASCADE,
-        #     success      INTEGER NOT NULL DEFAULT 0,
-        #     retry        INTEGER NOT NULL DEFAULT 0
-        # ) STRICT;"""
-
-        SCHEMA = "\n".join([CONVERSATION, MESSAGE, CONTENT, ASSISTANT, INDEXES])
+        SCHEMA = "\n".join([CONVERSATION, MESSAGE, CONTENT, ASSISTANT, TOOL, INDEXES])
 
         version = self.conn.execute("PRAGMA user_version").fetchone()[0]
         if version == 0:
@@ -159,10 +165,17 @@ class SQLDB:
         )
 
         if isinstance(msg, AssistantMessage):
+            tool_calls = json.dumps([asdict(tc) for tc in msg.tool_calls]) if msg.tool_calls else None
             self.conn.execute(
-                """INSERT INTO assistant_message (message_uuid, reasoning, model, finish_reason)
+                """INSERT INTO assistant_message (message_uuid, reasoning, model, finish_reason, tool_calls)
+                VALUES (?, ?, ?, ?, ?)""",
+                (msg_uuid, msg.reasoning, msg.model, msg.finish_reason, tool_calls),
+            )
+        elif isinstance(msg, ToolMessage):
+            self.conn.execute(
+                """INSERT INTO tool_message (message_uuid, tool_call_id, success, retry)
                 VALUES (?, ?, ?, ?)""",
-                (msg_uuid, msg.reasoning, msg.model, msg.finish_reason or None),
+                (msg_uuid, msg.tool_call_id, msg.success, msg.retry),
             )
 
     def insert_message_node(self, node: MessageNode, conv: Conversation):
@@ -212,9 +225,12 @@ class SQLDB:
 
         messages = [
             dict(r) for r in self.conn.execute(
-                """SELECT m.*, a.model, a.finish_reason
+                """SELECT m.*, 
+                    a.model, a.finish_reason, a.tool_calls,
+                    t.tool_call_id, t.success, t.retry
                 FROM message m
                 LEFT JOIN assistant_message a ON a.message_uuid = m.uuid
+                LEFT JOIN tool_message t ON a.message_uuid = m.uuid
                 WHERE m.conv_uuid = ?
                 ORDER BY m.time_ns, m.rowid""",
                 (conv_key,),
@@ -224,6 +240,10 @@ class SQLDB:
         by_uuid = {m["uuid"]: m for m in messages}
         for m in messages:
             m["content"] = []
+            if m["role"] == "assistant":
+                m["tool_calls"] = json.loads(m["tool_calls"]) if m["tool_calls"] else []
+            elif m["role"] == "tool":
+                m["success"] = bool(m["success"])
 
         for c in self.conn.execute(
             """SELECT c.* FROM content c
