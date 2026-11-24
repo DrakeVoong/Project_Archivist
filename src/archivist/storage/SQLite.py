@@ -204,7 +204,7 @@ class SQLDB:
 
     # ---------- reads ----------
 
-    def get_conversation(self, conv_uuid: uuid.UUID) -> list[dict]:
+    def get_conversation(self, conv_uuid: uuid.UUID) -> dict:
         """Load every message in a conversation (all branches), oldest first.
 
         Each dict is a message row (uuid, conv_uuid, parent_uuid, source, role,
@@ -215,6 +215,7 @@ class SQLDB:
         not one per message.
         Raises ValueError if the conversation doesn't exist.
         """
+
         conv_key = str(conv_uuid)
 
         exists = self.conn.execute(
@@ -222,6 +223,15 @@ class SQLDB:
         ).fetchone()
         if exists is None:
             raise ValueError(f"conversation {conv_uuid} not in DB")
+
+        conv_row = self.conn.execute(
+            "SELECT uuid, title, time_ns FROM conversation WHERE uuid = ?", (conv_key,)
+        ).fetchone()
+        conversation = {"conv_uuid":conv_key,
+                        "time_ns": conv_row["time_ns"],
+                        "title": conv_row["title"]
+                        }
+
 
         messages = [
             dict(r) for r in self.conn.execute(
@@ -254,7 +264,12 @@ class SQLDB:
         ):
             by_uuid[c["message_uuid"]]["content"].append(dict(c))
 
-        return messages
+        conversation["mesages"] = messages
+
+        return conversation
+
+    def load_conversation(self, conv_uuid:uuid.UUID) -> Conversation:
+        return Conversation.from_dict(self.get_conversation(conv_uuid))
 
     def __del__(self):
         """Close the connection when the object is garbage collected."""

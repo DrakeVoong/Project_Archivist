@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Optional, ClassVar
+from typing import Optional, ClassVar, Any
 import time
 import uuid
 
@@ -17,6 +17,30 @@ class Message:
     content: Content
     id: uuid.UUID = field(init=False, default_factory=uuid.uuid4)
     time_ns: int = field(init=False, default_factory=time.time_ns)
+
+def message_from_row(row:dict) -> Message:
+    common:dict[str, Any] = dict(
+        name=row["name"] or "",
+        content=Content(row["content"][0]["text"]),
+        id=uuid.UUID(row["uuid"]),
+        time_ns=row["time_ns"],
+    )
+    role = row["role"]
+    if role == "assistant":
+        return AssistantMessage(
+            **common,
+            reasoning=row["reasoning"],
+            model=row["model"],
+            finish_reason=row["finish_reason"] or "",
+            tool_calls=tuple(ToolCall(**tc) for tc in row["tool_calls"]),
+        )
+    if role == "tool":
+        return ToolMessage(**common, tool_call_id=row["tool_call_id"],
+                           success=row["success"], retry=row["retry"])
+    if role == "user":
+        return UserMessage(**common)
+    return SystemMessage(**common)
+
 
 @dataclass
 class MessageNode:
@@ -43,7 +67,7 @@ class AssistantMessage(Message):
     model: str = ""
     finish_reason: str = ""
     tool_calls: tuple[ToolCall, ...] = ()
-    
+
 @dataclass(frozen=True)
 class ToolCall:
     id: str

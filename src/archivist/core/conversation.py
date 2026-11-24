@@ -1,7 +1,7 @@
 import time
 import uuid
 
-from archivist.core.message import MessageNode, Message
+from archivist.core.message import MessageNode, Message, message_from_row
 from archivist.core.exceptions import EmptyConversationError
 
 class Conversation:
@@ -15,8 +15,19 @@ class Conversation:
         self.active_node:MessageNode | None = None
 
     @classmethod
-    def from_sql(cls):
-        pass
+    def from_dict(cls, data:dict) -> "Conversation":
+        conv = cls()
+        conv.conv_uuid = uuid.UUID(data["uuid"])
+        conv.title = data["title"]
+        conv.time_ns = data["time_ns"]
+        for row in data["messages"]:
+            message = message_from_row(row) 
+            parent = conv.uuid_index[uuid.UUID(row["parent_uuid"])] if row["parent_uuid"] else None
+            node = MessageNode(message, parent)
+            if parent:
+                parent.children.append(node)
+            conv._register(node)
+        return conv
 
     def is_empty(self) -> bool:
         return not self.uuid_index
