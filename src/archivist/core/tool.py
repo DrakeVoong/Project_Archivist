@@ -69,9 +69,13 @@ def read_file(relative_path: str, offset:int = 0) -> str:
     Read a file and return the 4096 characters.
     You can set an offset amount, but the default is 0.
 
-    Use this when you need the full text of a file on disk.
+    Use this when you need the text of a file on disk.  
+    While you are continually reading the file (calling read_file() in succession) set the offset to increments of 4096, so that the overlapping characters do not overfill your context window.
     """
     full_path = resolve_path(relative_path)
+
+    if full_path.is_dir():
+        raise IsADirectoryError(f"Expected a file, got a directory: {relative_path}")
 
     with open(full_path) as f:
         f.seek(offset)
@@ -86,6 +90,9 @@ def find_all_occurances_in_file(relative_path: str, substring:str) -> list[int]:
     Use this when you need to find a specific name, variable, function, etc. in a file without having to manually scan the entire file with read_file.
     """
     full_path = resolve_path(relative_path)
+
+    if full_path.is_dir():
+        raise IsADirectoryError(f"Expected a file, got a directory: {relative_path}")
 
     with open(full_path) as f:
         contents = f.read()
@@ -106,6 +113,9 @@ def edit_file(relative_path:str, old_str:str, new_str:str) -> bool:
     Use this when you need to edit a file, you must read the file first.
     """
     full_path = resolve_path(relative_path)
+
+    if full_path.is_dir():
+        raise IsADirectoryError(f"Expected a file, got a directory: {relative_path}")
 
     with open(full_path) as f:
         contents = f.read()
