@@ -57,5 +57,11 @@ class Settings:
         with open(CONFIG_PATH, "w", encoding="utf-8") as file:
             json.dump(self.config, file, indent=4)
 
+def resolve_path(p: str) -> Path:
+    full = (PROJECT_ROOT / p).resolve()
+    if not full.is_relative_to(PROJECT_ROOT):
+        raise ValueError(f"Path must be relative and inside the workspace: {p}")
+    return full
+
 
 settings = Settings()
