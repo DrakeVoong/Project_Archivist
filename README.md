@@ -1,17 +1,19 @@
 # Project Archivist
 
+Project name to be determined.  
+Possible candidate CLaRA - Complusive Liar and Reckless Assistant
+
 ## Description
 
-Project Archivist is a tool meant to help, organize, and manage internet information. With the use of workflow/diagram, allows the user to customize the specific steps of their own AI agents. 
+Project Archivist is a tool meant assist the user at organizing and managing internet information. Using a harness and multi-agent architecture. Assumes that the agent WILL hallucinate, be malicious, and have ulterior motives due to prompt injections and other sources of uncertainty.
 
 ## Installation
 
 >This project does *NOT* host the LLM.<br>
->An OpenAI API Endpoint will be needed. (e.g. /v1/chat/completions)
+>An OpenAI API Endpoint will be needed. (e.g. locahost:8080/v1/chat/completions)
 >
 >Local LLM compute
 >- Open-source: [llama.cpp](https://github.com/ggml-org/llama.cpp?tab=readme-ov-file), [vllm](https://github.com/vllm-project/vllm)<br>
->- Closed-source: [LM Studio](https://lmstudio.ai/)<br>
 >
 >Cloud/API: [OpenAI](https://chatgpt.com), [Anthropic](https://claude.ai/)
 
@@ -26,21 +28,14 @@ pip install uv
 
 # 3. (Optional) Create environment
 uv venv
-source .venv/bin/activate       # Linux/macOS
 source .venv\Scripts\activate   # Windows
 
 # 4. Install dependencies
 uv sync
 
 # 5. Run setup
-python setup.py
+# ~/project_archivist/
+python src/archivist/core/harness.py
 ```
 
 ## Road Map
-- [ ] Complete workflow functions
-- [ ] Vector databases integration with agents
-- [ ] Add wikipedia knowledge
-
-## Future Features
-- Simulate conversation with other agents to allow primary agent to "grow" and "learn" from experiences over time
-- Tag based storage for fast and efficient searching of personal documents, internet information, videos, etc
