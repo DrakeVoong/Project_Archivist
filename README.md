@@ -1,7 +1,7 @@
 # Project Archivist
 
 Project name to be determined.  
-Possible candidate CLaRA - Complusive Liar and Reckless Assistant
+Possible candidate CLaRA - Compulsive Liar and Reckless Assistant
 
 ## Description
 
@@ -39,3 +39,15 @@ python src/archivist/core/harness.py
 ```
 
 ## Road Map
+Must Do
+- Implement logging to track call stack
+- Stream tokens into terminal
+- turn harness into a class so that it can be used by interfaces
+- add find all occurances in multiple files (helpful for large file structures)
+- fix find_all_occurances error
+    - when an agent tries to call into a directory the full absolute path is exposed to the agent
+    - better error handling techniques when returning data to agent
+
+Nice to Do
+- Implement an atomic file writing procedure
+    - copy file, write to temp file, replace file 
