@@ -1,15 +1,18 @@
 import time
 from openai.types.chat import ChatCompletionMessageParam
 import json
+import argparse
+from pathlib import Path
 
 from archivist.core.agent import Agent
 from archivist.core.conversation import Conversation
 from archivist.core.exceptions import TimeoutError
-from archivist.core.message import Message, Content, UserMessage, AssistantMessage, SystemMessage, ToolMessage, ToolCall
+from archivist.core.type import Message, Content, UserMessage, AssistantMessage, SystemMessage, ToolMessage, ToolCall
 from archivist.llm_providers.llamacpp_server import LlamaCPPServer
 from archivist.llm_providers.serialize import convert_to_openai
 from archivist.storage.SQLite import SQLDB
 from archivist.core.tool import call_tool, get_tools
+from archivist.config.settings import CONV_PATH, LOG_PATH
 
 def build_context(conversation:Conversation, agent:Agent) -> list[ChatCompletionMessageParam]:
     """
@@ -32,10 +35,30 @@ def add_and_save(message:Message, conversation:Conversation, db:SQLDB):
     db.insert_message_node(node, conversation)
     return node
 
+def command_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--dev", action="store_true", help="enable dev mode")
+    args = parser.parse_args()
+
+    if args.dev:
+        print("Dev mode on")
+        print("Cleaning leftover files.")
+
+        files = [
+            CONV_PATH / "conversations.db",
+            LOG_PATH / "llama_server_log.txt",
+        ]
+
+        for file in files:
+            Path(file).unlink(missing_ok=True)
+
+
 config = [
     "-fa", "1",
     "--fit-target", "128",
-    "--fit-ctx", "65536",
+    "--fit-ctx", "262144",
+    "-ctk", "q8_0",
+    "-ctv", "q8_0",
     "-np", "1",
 ]
 
@@ -43,6 +66,8 @@ config = [
 TIMEOUT = 30
 
 def main():
+    command_arguments()
+
     llama_cpp = LlamaCPPServer("5002")
     llama_cpp.connect_model("Qwen3.6-35B-A3B-UD-Q4_K_M.gguf", config)
 
@@ -68,12 +93,12 @@ def main():
 
         # build llm input using CLaRA system instruct
         context = build_context(conv, CLaRA)
-        response = llama_cpp.generate_openai(context, get_tools())
+        response = llama_cpp.generate_openai(context, CLaRA.sampling, get_tools())
 
         agent_response = response.choices[0].message.content
 
         if agent_response is None:
-            raise ValueError()
+            agent_response = ""
 
         # agent loop - keep going until the model stops requesting tool calls
         # the model decides when to finish with "stop"
@@ -116,11 +141,11 @@ def main():
             # build llm input using CLaRA system instruct and generate response
             # that could be tool call or final response to user
             context = build_context(conv, CLaRA)
-            response = llama_cpp.generate_openai(context, get_tools())
+            response = llama_cpp.generate_openai(context, CLaRA.sampling, get_tools())
             agent_response = response.choices[0].message.content
 
             if agent_response is None:
-                raise ValueError()
+                agent_response = ""
 
         # The last message is to the user (in the tool call loop)
         print(f"{CLaRA.name}: {agent_response}")

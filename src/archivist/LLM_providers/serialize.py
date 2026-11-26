@@ -1,7 +1,7 @@
-from archivist.core.message import Message, UserMessage, AssistantMessage, ToolMessage, SystemMessage
+from archivist.core.type import Message, UserMessage, AssistantMessage, ToolMessage, SystemMessage
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionAssistantMessageParam 
 
-# TODO: support for different content types.
+# TODO: support for different content .
 def convert_to_openai(message: Message) -> ChatCompletionMessageParam:
     match message:
         case SystemMessage():

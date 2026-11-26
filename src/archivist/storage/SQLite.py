@@ -6,7 +6,7 @@ from dataclasses import asdict
 
 
 from archivist.config.settings import CONV_PATH
-from archivist.core.message import MessageNode, AssistantMessage, ToolMessage
+from archivist.core.type import MessageNode, AssistantMessage, ToolMessage
 from archivist.core.conversation import Conversation
 
 # Ai once again :c

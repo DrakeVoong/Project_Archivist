@@ -1,7 +1,7 @@
 import time
 import uuid
 
-from archivist.core.message import MessageNode, Message, message_from_row
+from archivist.core.type import MessageNode, Message, message_from_row
 from archivist.core.exceptions import EmptyConversationError
 
 class Conversation:

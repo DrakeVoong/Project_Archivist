@@ -11,6 +11,7 @@ from openai.types.chat import (
     ChatCompletionToolUnionParam,
 )
 
+from archivist.core.type import SamplingConfig
 from archivist.config.settings import settings, LOG_PATH
 from archivist.llm_providers.provider import Provider
 
@@ -80,15 +81,17 @@ class LlamaCPPServer(Provider):
         response.raise_for_status()
         return response.json()
 
-    def generate_openai(self, messages: Iterable[ChatCompletionMessageParam], 
+    def generate_openai(self, messages: Iterable[ChatCompletionMessageParam], sampling_config:SamplingConfig, 
                         tools: Iterable[ChatCompletionToolUnionParam] | None = None) -> ChatCompletion:
         response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 tools=tools if tools else omit,
-                temperature=0.9,
-                top_p=0.9,
-                extra_body={"top_k": 40, "min_p": 0}, # sampling parameters in llama.cpp but not in openai
+                # Sampling
+                temperature=sampling_config.temperature,
+                top_p=sampling_config.top_p,
+                presence_penalty=sampling_config.presence_penalty,
+                extra_body=sampling_config.get_openai_llamacpp_kwargs()
                 )
         return response
 

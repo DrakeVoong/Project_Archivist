@@ -4,7 +4,7 @@ from typing import Optional, ClassVar, Any
 import time
 import uuid
 
-
+# ---------- Message ----------
 @dataclass
 class Content:
     text: str
@@ -80,3 +80,20 @@ class ToolMessage(Message):
     tool_call_id: str
     success: bool = False
     retry: int = 0
+
+
+# ---------- Configs ----------
+
+@dataclass()
+class SamplingConfig:
+    temperature: int
+    top_p: int
+    top_k: int
+    min_p: int
+    presence_penalty: int
+    repetition_penalty: int
+
+    def get_openai_llamacpp_kwargs(self) -> dict:
+        return {"top_k":self.top_k,
+                "min_p":self.min_p,
+                "repetition_penalty":self.repetition_penalty}
