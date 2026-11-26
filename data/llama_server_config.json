@@ -1,0 +1,8 @@
+{
+    "--flash-attn": "on",
+    "--fit-target": 128,
+    "--fit-ctx": 262144,
+    "--cache-type-k": "q8_0",
+    "--cache-type-v": "q8_0",
+    "--parallel": 1
+}

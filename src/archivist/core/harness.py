@@ -53,15 +53,6 @@ def command_arguments():
             Path(file).unlink(missing_ok=True)
 
 
-config = [
-    "-fa", "1",
-    "--fit-target", "128",
-    "--fit-ctx", "262144",
-    "-ctk", "q8_0",
-    "-ctv", "q8_0",
-    "-np", "1",
-]
-
 # llama-server can take a while loading a model on local hardware
 TIMEOUT = 30
 
@@ -69,7 +60,7 @@ def main():
     command_arguments()
 
     llama_cpp = LlamaCPPServer("5002")
-    llama_cpp.connect_model("Qwen3.6-35B-A3B-UD-Q4_K_M.gguf", config)
+    llama_cpp.connect_model("Qwen3.6-35B-A3B-UD-Q4_K_M.gguf")
 
     start = time.time()
     while llama_cpp.get_status() != 200:

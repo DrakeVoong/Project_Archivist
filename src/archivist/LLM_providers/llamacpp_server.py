@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import json
 import subprocess
 import requests
@@ -12,7 +13,7 @@ from openai.types.chat import (
 )
 
 from archivist.core.type import SamplingConfig
-from archivist.config.settings import settings, LOG_PATH
+from archivist.config.settings import settings, LOG_PATH, DATA_PATH
 from archivist.llm_providers.provider import Provider
 
 
@@ -25,6 +26,20 @@ class LlamaCPPServer(Provider):
         self.API_URL = f"http://127.0.0.1:{self.port}/v1/chat/completions"
         self.client = OpenAI(base_url=f"http://127.0.0.1:{self.port}/v1", api_key="none")
         self.model = "local"
+
+    def _get_config(self):
+        config_path = DATA_PATH / "llama_server_config.json"
+        if not config_path.exists():
+            raise FileNotFoundError(f'File {config_path} not found.') 
+
+        with open(config_path) as f:
+            config = json.load(f)
+
+        args = []
+        for flag, value in config.items():
+            args += [flag, str(value)]
+        return args
+
 
     def connect(self, config: list):
         """
@@ -39,7 +54,7 @@ class LlamaCPPServer(Provider):
 
         return 1
 
-    def connect_model(self, model:str, config:list):
+    def connect_model(self, model:str):
         """
         Start llama-server in direct model loading mode
         """
@@ -47,7 +62,7 @@ class LlamaCPPServer(Provider):
         command = [self.llama_server_path, 
                    "-m", settings.LLMS_DIR / model, 
                    "--port", self.port, 
-                   *config
+                   *self._get_config()
                    ]
 
         # Execute the llama-server command as a seperate process
