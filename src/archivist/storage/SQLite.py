@@ -283,4 +283,4 @@ class SQLDB:
     def __del__(self):
         """Close the connection when the object is garbage collected."""
         self.conn.close()
-        log.info("Closed SQLiter connection")
+        log.info("Closed SQLite connection")

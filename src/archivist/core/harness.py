@@ -92,7 +92,7 @@ def main():
 
         while(True):
             # User Message
-            log.info("User turn -----")
+            log.info("User turn")
             print(f"{user_name}: ")
             user_response = input()
             user_content = Content(user_response)
@@ -101,7 +101,7 @@ def main():
             add_and_save(user_message, conv, db)
 
             # build llm input using CLaRA system instruct
-            log.info("Assistant turn -----")
+            log.info("Assistant turn")
             context = build_context(conv, CLaRA)
             response = llama_cpp.generate_openai(context, CLaRA.sampling, get_tools())
             agent_response = response.choices[0].message.content
