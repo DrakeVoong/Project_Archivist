@@ -1,6 +1,10 @@
 import inspect
 from pathlib import Path
 import re
+import logging
+
+log = logging.getLogger(__name__)
+
 
 from archivist.config.settings import PROJECT_ROOT, resolve_path
 
@@ -52,10 +56,16 @@ def get_tools():
 
 def call_tool(name, args):
     if name not in TOOLS:
+        log.warning("Unknown tool requested: %s", name)
         return f"Unknown tool: {name}"
+    log.info("Calling tool %s", name)
+    log.debug("Tool %s args: %r", name, args)
     try:
-        return str(TOOLS[name]["fn"](**args))
+        result = str(TOOLS[name]["fn"](**args))
+        log.debug("Tool %s returned %d chars", name, len(result))
+        return result
     except Exception as e:
+        log.warning("Tool %s failed: %s", name, e)
         return f"Error: {e}"
 
 # -------- File/Folders ---------

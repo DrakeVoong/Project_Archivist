@@ -1,8 +1,12 @@
 import time
 import uuid
+import logging
+
+log = logging.getLogger(__name__)
 
 from archivist.core.type import MessageNode, Message, message_from_row
 from archivist.core.exceptions import EmptyConversationError
+
 
 class Conversation:
 
@@ -13,6 +17,7 @@ class Conversation:
         self.uuid_index: dict[uuid.UUID, MessageNode] = {}
         self.title = ""
         self.active_node:MessageNode | None = None
+        log.debug("Created conversation %s", self.conv_uuid)
 
     @classmethod
     def from_dict(cls, data:dict) -> "Conversation":

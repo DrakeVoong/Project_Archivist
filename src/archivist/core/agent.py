@@ -1,6 +1,7 @@
-from pathlib import Path
 import json
-from types import SimpleNamespace
+import logging
+
+log = logging.getLogger(__name__)
 
 from archivist.core.type import SamplingConfig
 from archivist.config.settings import AGENT_PATH
@@ -15,6 +16,7 @@ class Agent:
         self.AGENT_DIR = AGENT_PATH / name
         self.system_instruct = self._get_sys_instruct()
         self.sampling = self._get_sampling()
+        log.info("Loaded agent %s", self.name)
 
     def _get_sys_instruct(self):
         sys_instruct_path = self.AGENT_DIR / f"{self.name}.md"

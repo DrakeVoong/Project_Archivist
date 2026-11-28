@@ -3,6 +3,9 @@ import uuid
 from enum import IntEnum
 import json
 from dataclasses import asdict
+import logging
+
+log = logging.getLogger(__name__)
 
 
 from archivist.config.settings import CONV_PATH
@@ -40,6 +43,7 @@ class SQLDB:
         journal_mode=WAL persists in the file; busy_timeout makes concurrent
         writers wait (up to 5s) instead of failing immediately.
         """
+        log.info("Connecting to SQLite")
         self.conn = sqlite3.connect(CONV_PATH / "conversations.db")
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
@@ -122,8 +126,10 @@ class SQLDB:
             with self.conn:
                 self.conn.executescript(SCHEMA)
                 self.conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+            log.info("Initialized SQLite schema v%s", SCHEMA_VERSION)
         elif version != SCHEMA_VERSION:
             raise RuntimeError(f"DB schema v{version}, code expects v{SCHEMA_VERSION}")
+
 
     # ---------- inserts ----------
 
@@ -187,6 +193,9 @@ class SQLDB:
         with self.conn:
             self._ensure_conversation(conv)
             self._insert_message(node, conv.conv_uuid, Source.CONVERSATION)
+
+        log.debug("Inserted message node %s into conversation %s",node.message.id, conv.conv_uuid)
+
 
     def insert_conversation(self, conv: Conversation):
         """Persist an entire in-memory conversation in one transaction.
@@ -274,3 +283,4 @@ class SQLDB:
     def __del__(self):
         """Close the connection when the object is garbage collected."""
         self.conn.close()
+        log.info("Closed SQLiter connection")

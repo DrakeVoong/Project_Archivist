@@ -11,6 +11,9 @@ from openai.types.chat import (
     ChatCompletionMessageParam,
     ChatCompletionToolUnionParam,
 )
+import logging
+
+log = logging.getLogger(__name__)
 
 from archivist.core.type import SamplingConfig
 from archivist.config.settings import settings, LOG_PATH, DATA_PATH
@@ -44,6 +47,7 @@ class LlamaCPPServer(Provider):
             else:
                 args.extend([flag, str(value)])
 
+        log.debug("Loaded llama-server config from %s",config_path)
         return args
 
 
@@ -71,6 +75,8 @@ class LlamaCPPServer(Provider):
                    *self._get_config()
                    ]
 
+        log.info("Starting llama-server on port %s (model=%s)", self.port, model)
+        log.debug("llama-server command: %s", command)
         # Execute the llama-server command as a seperate process
         with open(self.log_file, 'w') as f:
             self.process = subprocess.Popen(command, stdout=f, stderr=subprocess.STDOUT, text=True)
@@ -104,6 +110,7 @@ class LlamaCPPServer(Provider):
 
     def generate_openai(self, messages: Iterable[ChatCompletionMessageParam], sampling_config:SamplingConfig, 
                         tools: Iterable[ChatCompletionToolUnionParam] | None = None) -> ChatCompletion:
+        log.info("Generating response")
         response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
@@ -114,6 +121,10 @@ class LlamaCPPServer(Provider):
                 presence_penalty=sampling_config.presence_penalty,
                 extra_body=sampling_config.get_openai_llamacpp_kwargs()
                 )
+        timings = getattr(response, "timings", None)
+        if timings is not None:
+            log.info("Response generated (tok/s=%.2f, cached=%s, prompt=%s, predicted=%s)",
+                     timings["predicted_per_second"], timings["cache_n"], timings["prompt_n"], timings["predicted_n"])
         return response
 
     def generate_stream(self, messages:str) -> Generator:
@@ -133,30 +144,30 @@ class LlamaCPPServer(Provider):
 
     def get_status(self):
         if self.port == -1:
-            print("Llama server is not running")
+            log.warning("llama-server is not running")
             return 404
 
         try:
             response = requests.get(f"http://127.0.0.1:{self.port}/health", stream=False)
         except requests.exceptions.ConnectionError as e:
-            print(f"Error connecting to llama-server: {e}")
+            log.error("Error connecting to llama-server: %s", e)
             return 404
 
         if response.status_code == 503:
-            print("llama-server still loading")
             return 503
         else:
-            print("llama-server is ready")
             return 200
 
     def disconnect(self):
         """
         Stop llama-server
         """
+
         if self.running and self.process:
             self.process.terminate()
             self.process.wait()
             self.running = False
+            log.info("Stopped llama-server on port %s", self.port)
 
     def __del__(self):
         self.disconnect()
