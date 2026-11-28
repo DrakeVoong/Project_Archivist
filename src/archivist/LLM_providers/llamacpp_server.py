@@ -29,15 +29,21 @@ class LlamaCPPServer(Provider):
 
     def _get_config(self):
         config_path = DATA_PATH / "llama_server_config.json"
+
         if not config_path.exists():
-            raise FileNotFoundError(f'File {config_path} not found.') 
+            raise FileNotFoundError(f"File {config_path} not found.")
 
         with open(config_path) as f:
             config = json.load(f)
 
         args = []
         for flag, value in config.items():
-            args += [flag, str(value)]
+            if isinstance(value, bool):
+                if value:
+                    args.append(flag)
+            else:
+                args.extend([flag, str(value)])
+
         return args
 
 
