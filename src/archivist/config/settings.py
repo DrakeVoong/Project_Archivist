@@ -58,7 +58,10 @@ class Settings:
             json.dump(self.config, file, indent=4)
 
 def resolve_path(p: str) -> Path:
-    full = (PROJECT_ROOT / p).resolve()
+    candidate = Path(p)
+    if candidate.is_absolute() or candidate.anchor:
+        raise ValueError(f"Path must be relative and inside the workspace: {p}")
+    full = (PROJECT_ROOT / candidate).resolve()
     if not full.is_relative_to(PROJECT_ROOT):
         raise ValueError(f"Path must be relative and inside the workspace: {p}")
     return full

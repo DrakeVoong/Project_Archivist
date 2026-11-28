@@ -15,13 +15,14 @@ class Message:
     role: ClassVar[str]
     name: str
     content: Content
-    id: uuid.UUID = field(init=False, default_factory=uuid.uuid4)
-    time_ns: int = field(init=False, default_factory=time.time_ns)
+    id: uuid.UUID = field(default_factory=uuid.uuid4, kw_only=True)
+    time_ns: int = field(default_factory=time.time_ns, kw_only=True)
 
 def message_from_row(row:dict) -> Message:
+    text = (row["content"][0]["text"] or "") if row["content"] else ""
     common:dict[str, Any] = dict(
         name=row["name"] or "",
-        content=Content(row["content"][0]["text"]),
+        content=Content(text),
         id=uuid.UUID(row["uuid"]),
         time_ns=row["time_ns"],
     )
@@ -36,7 +37,7 @@ def message_from_row(row:dict) -> Message:
         )
     if role == "tool":
         return ToolMessage(**common, tool_call_id=row["tool_call_id"],
-                           success=row["success"], retry=row["retry"])
+                           success=row["success"], retry=row["retry"] or 0)
     if role == "user":
         return UserMessage(**common)
     return SystemMessage(**common)

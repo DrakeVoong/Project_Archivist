@@ -227,7 +227,7 @@ class SQLDB:
         conv_row = self.conn.execute(
             "SELECT uuid, title, time_ns FROM conversation WHERE uuid = ?", (conv_key,)
         ).fetchone()
-        conversation = {"conv_uuid":conv_key,
+        conversation = {"uuid":conv_key,
                         "time_ns": conv_row["time_ns"],
                         "title": conv_row["title"]
                         }
@@ -236,11 +236,11 @@ class SQLDB:
         messages = [
             dict(r) for r in self.conn.execute(
                 """SELECT m.*, 
-                    a.model, a.finish_reason, a.tool_calls,
+                    a.reasoning, a.model, a.finish_reason, a.tool_calls,
                     t.tool_call_id, t.success, t.retry
                 FROM message m
                 LEFT JOIN assistant_message a ON a.message_uuid = m.uuid
-                LEFT JOIN tool_message t ON a.message_uuid = m.uuid
+                LEFT JOIN tool_message t ON t.message_uuid = m.uuid
                 WHERE m.conv_uuid = ?
                 ORDER BY m.time_ns, m.rowid""",
                 (conv_key,),
@@ -264,7 +264,7 @@ class SQLDB:
         ):
             by_uuid[c["message_uuid"]]["content"].append(dict(c))
 
-        conversation["mesages"] = messages
+        conversation["messages"] = messages
 
         return conversation
 
